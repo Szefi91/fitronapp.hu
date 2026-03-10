@@ -1,18 +1,22 @@
 document.getElementById('year').textContent = new Date().getFullYear();
 
 const heroMain = document.getElementById('hero-main-screen');
-const screens = [
-  './assets/screen-home.jpg',
-  './assets/screen-workout.jpg',
-  './assets/screen-community.jpg',
-  './assets/screen-macros.jpg'
-];
+
+// Vite build-safe: src-eket a DOM-ból olvassuk, így a hashed fájlnevek is működnek
+const gallerySources = Array.from(document.querySelectorAll('.shot img'))
+  .map((img) => img.getAttribute('src'))
+  .filter(Boolean);
+
+const screens = Array.from(new Set([
+  heroMain?.getAttribute('src'),
+  ...gallerySources
+])).filter(Boolean);
 
 let idx = 0;
 let lock = false;
 
 function swapScreen(next) {
-  if (!heroMain || lock) return;
+  if (!heroMain || lock || !screens.length) return;
   lock = true;
   heroMain.classList.add('swap');
   setTimeout(() => {
@@ -23,6 +27,7 @@ function swapScreen(next) {
 }
 
 window.addEventListener('scroll', () => {
+  if (!screens.length) return;
   const max = document.body.scrollHeight - window.innerHeight;
   if (max <= 0) return;
   const ratio = window.scrollY / max;
@@ -34,7 +39,7 @@ window.addEventListener('scroll', () => {
 });
 
 setInterval(() => {
-  if (!heroMain) return;
+  if (!screens.length) return;
   idx = (idx + 1) % screens.length;
   swapScreen(idx);
 }, 3800);
