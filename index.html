@@ -3,19 +3,19 @@
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <title>FITRON App – Közösségi fitness app | Android és hamarosan iOS</title>
-  <meta name="description" content="A FITRON közösségi fitness app: edzéstervek, kihívások, fejlődéskövetés és motiváció egy helyen. Android indul, iOS hamarosan." />
+  <title>FITRON App, Közösségi fitness app | Android és iOS</title>
+  <meta name="description" content="A FITRON közösségi fitness app: edzéstervek, makrók, receptek, lépésszám és közösség egy helyen. Android és iOS." />
   <meta name="robots" content="index,follow,max-image-preview:large" />
   <meta name="theme-color" content="#05080f" />
   <meta property="og:type" content="website" />
-  <meta property="og:title" content="FITRON App – Közösségi fitness app" />
-  <meta property="og:description" content="Edzés, közösség, progress és motiváció. Csatlakozz a FITRON közösséghez." />
-  <meta property="og:image" content="./assets/hero-fitron.jpg" />
+  <meta property="og:title" content="FITRON App, Közösségi fitness app" />
+  <meta property="og:description" content="Edzés, közösség, fejlődés és motiváció. Csatlakozz a FITRON közösséghez." />
+  <meta property="og:image" content="https://fitronapp.hu/assets/hero-fitron.jpg" />
   <meta property="og:locale" content="hu_HU" />
   <meta name="twitter:card" content="summary_large_image" />
-  <meta name="twitter:title" content="FITRON App" />
+  <meta name="twitter:title" content="FITRON App, Közösségi fitness app" />
   <meta name="twitter:description" content="Közösségi fitness app valódi fejlődéshez." />
-  <meta name="twitter:image" content="./assets/hero-fitron.jpg" />
+  <meta name="twitter:image" content="https://fitronapp.hu/assets/hero-fitron.jpg" />
   <link rel="canonical" href="https://fitronapp.hu/" />
   <link rel="icon" type="image/svg+xml" href="./assets/favicon.svg" />
   <link rel="icon" type="image/png" sizes="32x32" href="./assets/favicon-32.png" />
@@ -24,6 +24,24 @@
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
   <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;600;700;800;900&display=swap" rel="stylesheet">
+  <link rel="alternate" hreflang="hu" href="https://fitronapp.hu/" />
+  <link rel="alternate" hreflang="en" href="https://fitronapp.hu/en/" />
+  <link rel="alternate" hreflang="de" href="https://fitronapp.hu/de/" />
+  <link rel="alternate" hreflang="x-default" href="https://fitronapp.hu/" />
+  <script type="application/ld+json">
+  {
+    "@context": "https://schema.org",
+    "@type": "MobileApplication",
+    "name": "FITRON",
+    "operatingSystem": "Android, iOS",
+    "applicationCategory": "HealthApplication",
+    "inLanguage": ["hu", "en"],
+    "url": "https://fitronapp.hu/",
+    "image": "https://fitronapp.hu/assets/hero-fitron.jpg",
+    "description": "A FITRON közösségi fitness app: edzéstervek, makrók, receptek, lépésszám és közösség egy helyen. Android és iOS.",
+    "author": { "@type": "Organization", "name": "FITRON", "url": "https://fitronapp.hu/" }
+  }
+  </script>
   <link rel="stylesheet" href="./styles.css" />
 </head>
 <body>
@@ -44,26 +62,38 @@
         <p class="pill">Közösség × Edzés × Motiváció</p>
         <h1>Nem csak edzel.<br/> <span class="accent">Szintet lépsz.</span></h1>
         <p class="lead">
-          A FITRON segít rendszert vinni az edzésedbe, és közben építi köréd a közösséget.
-          Kihívások, naplózás, fejlődési visszajelzés — minden egy appban.
-        </p>
+Edzésterv, makrók, receptek, lépésszám és egy közösség, aki tolja veled. Egy appban, magyarul. Androidra és iPhone-ra is.</p>
 
         <div id="download" class="cta-row">
-          <a class="btn primary pulse" href="#" aria-label="Google Play letöltés">Google Play — Hamarosan</a>
+          <a class="btn primary pulse" href="#" aria-label="Google Play letöltés">Google Play, hamarosan</a>
           <a class="btn secondary" href="mailto:info@fitronapp.hu">Korai hozzáférés</a>
         </div>
 
-        <div class="platform-row">
-          <span class="platform-chip active">Android indul</span>
-          <span class="platform-chip">iOS hamarosan</span>
-          <span class="platform-chip">QR kód hamarosan</span>
+        <p class="platform-line">Androidon és iPhone-on is elérhető lesz. Most zárt tesztelés fut mindkettőn.</p>
+
+        <div class="lang-row" aria-label="Nyelvválasztó">
+          <span class="lang-ico" aria-hidden="true">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="9"/><path d="M3 12h18M12 3a15 15 0 010 18M12 3a15 15 0 000 18"/></svg>
+          </span>
+          <span class="lang-label">Nyelv</span>
+          <ul class="lang-list">
+            <li><a href="/" class="is-current" hreflang="hu" lang="hu">Magyar</a></li>
+            <li><a href="/en/" hreflang="en" lang="en">English</a></li>
+            <li><a href="/de/" hreflang="de" lang="de">Deutsch</a></li>
+          </ul>
         </div>
 
-        <ul class="stats">
-          <li><strong>Közösség</strong><span>Motiváló feed és közös kihívások</span></li>
-          <li><strong>Progress</strong><span>Mérhető fejlődés, nem vakrepülés</span></li>
-          <li><strong>Fókusz</strong><span>Napi rutin támogatás sallang nélkül</span></li>
-        </ul>
+        <div class="qr-row">
+          <div class="qr-card">
+            <img src="./assets/qr-android.svg" alt="QR kód a Google Play letöltéshez" width="96" height="96" />
+            <span class="qr-label">Android</span>
+          </div>
+          <div class="qr-card qr-card--soon">
+            <img src="./assets/qr-ios.svg" alt="QR kód az App Store letöltéshez" width="96" height="96" />
+            <span class="qr-label">iPhone <em>hamarosan</em></span>
+          </div>
+          <p class="qr-hint">Olvasd be a telefonoddal, és már töltődik is.</p>
+        </div>
       </div>
 
       <div class="hero-visual hero-stack">
@@ -88,41 +118,124 @@
     </section>
 
     <section class="section features">
-      <h2>Miért fogják szeretni a FITRON-t?</h2>
+      <h2>Három ok, amiért bent maradsz</h2>
       <div class="grid">
-        <article class="card fx-card">
-          <h3>Közösségi boost</h3>
-          <p>Posztok, eredménymegosztás, kihívások. Nem egyedül tolod — ez adja a húzóerőt.</p>
+        <article class="card fx-card"><span class="card-ico" aria-hidden="true"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round"><path d="M12 2a5 5 0 100 10 5 5 0 000-10zM2 22a10 10 0 0120 0z"/></svg></span>
+          <h3>Nem egyedül tolod</h3>
+          <p>Hírfolyam, közös kihívások, és a többiek eredménye a szemed előtt. Ez tart bent akkor is, amikor nincs kedved.</p>
         </article>
-        <article class="card fx-card">
-          <h3>Okos edzésrutin</h3>
-          <p>Átlátható tervek, követhető lépések, és olyan flow, ami tényleg segít kitartani.</p>
+        <article class="card fx-card"><span class="card-ico" aria-hidden="true"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round"><path d="M4 12h4l3-8 4 16 3-8h2"/></svg></span>
+          <h3>A tervezést levesszük rólad</h3>
+          <p>Kész edzéstervek otthonra és terembe. Kiválasztod, elindítod, és csak az edzésre kell figyelned.</p>
         </article>
-        <article class="card fx-card">
-          <h3>Valós fejlődés</h3>
-          <p>Statisztikák és visszajelzések, hogy lásd: hol tartasz, merre érdemes menni tovább.</p>
+        <article class="card fx-card"><span class="card-ico" aria-hidden="true"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round"><path d="M3 20h18M6 20V10M11 20V4M16 20v-7"/></svg></span>
+          <h3>Számokban látod a fejlődést</h3>
+          <p>Lépés, kalória, testsúly, XP. Hetekre visszanézed, és látod, mi működött és mi nem.</p>
         </article>
       </div>
     </section>
 
-    <section class="section app-showcase">
-      <h2>Nézz bele az appba</h2>
-      <p class="showcase-lead">Valódi képernyők a FITRON-ból — edzés, konyha, közösség és fejlődés egy helyen.</p>
-      <div class="shots-grid">
-        <figure class="shot"><img src="./assets/screen-workout.jpg" alt="FITRON edzés képernyő"><figcaption>Edzéstervek</figcaption></figure>
-        <figure class="shot"><img src="./assets/screen-kitchen.jpg" alt="FITRON konyha képernyő"><figcaption>Konyha</figcaption></figure>
-        <figure class="shot"><img src="./assets/screen-community.jpg" alt="FITRON közösség képernyő"><figcaption>Közösség</figcaption></figure>
-        <figure class="shot"><img src="./assets/screen-macros.jpg" alt="FITRON makrók képernyő"><figcaption>Makrók</figcaption></figure>
-        <figure class="shot"><img src="./assets/screen-profile.jpg" alt="FITRON profil képernyő"><figcaption>Profil</figcaption></figure>
+
+    <section class="section live" id="live">
+      <div class="live-head">
+        <h2>Így él az app a kezedben</h2>
+        <p class="showcase-lead">Görgess lefelé, és a telefon veled együtt halad. Ezek nem rajzolt képek, hanem felvételek magáról a futó alkalmazásról.</p>
       </div>
+
+      <div class="live-wrap">
+        <div class="live-sticky">
+          <div class="live-phone-hold">
+            <div class="device live-device">
+              <span class="device-notch"></span>
+              <span class="device-btn btn-top"></span>
+              <span class="device-btn btn-mid"></span>
+              <span class="device-btn btn-low"></span>
+              <div class="device-screen">
+                <video class="live-vid is-on" data-vid="steps" src="./assets/app-dashboard.mp4" poster="./assets/app-dashboard.jpg" aria-label="FITRON kezdőképernyő felvétele" muted loop playsinline preload="metadata" autoplay></video>
+                <video class="live-vid" data-vid="level" src="./assets/app-level.mp4" poster="./assets/app-level.jpg" aria-label="FITRON szintlépés képernyő felvétele" muted loop playsinline preload="metadata"></video>
+                <video class="live-vid" data-vid="macros" src="./assets/app-tracker.mp4" poster="./assets/app-tracker.jpg" aria-label="FITRON kalória és makró követő felvétele" muted loop playsinline preload="metadata"></video>
+                <video class="live-vid" data-vid="social" src="./assets/app-kitchen.mp4" poster="./assets/app-kitchen.jpg" aria-label="FITRON receptek képernyő felvétele" muted loop playsinline preload="metadata"></video>
+                <video class="live-vid" data-vid="map" src="./assets/app-community.mp4" poster="./assets/app-community.jpg" aria-label="FITRON közösség és térkép felvétele" muted loop playsinline preload="metadata"></video>
+
+              </div>
+            </div>
+            <span class="live-glow" aria-hidden="true"></span>
+          </div>
+        </div>
+
+        <div class="live-steps">
+          <article class="live-step is-active" data-step="steps">
+            <span class="ls-idx">01</span>
+            <h3>Egy képernyőn az egész napod</h3>
+            <p>Szint és XP felül, alatta a szériád, a mai lépésszámod és a napi beviteled. Nem kell keresgélned, ez fogad, amikor megnyitod.</p>
+            <ul class="ls-chips"><li>Szint és XP</li><li>Napi széria</li><li>Lépésszám</li><li>Napi bevitel</li></ul>
+          </article>
+          <article class="live-step" data-step="level">
+            <span class="ls-idx">02</span>
+            <h3>Szintet lépsz, és meg is mutatja</h3>
+            <p>Mérföldkőnél az app megáll egy pillanatra: jön a rang, a jelvény és a jutalom. Ez a visszajelzés, amit egy sima naplótól nem kapsz meg.</p>
+            <ul class="ls-chips"><li>Rangok</li><li>Jelvények</li><li>XP jutalom</li></ul>
+          </article>
+          <article class="live-step" data-step="macros">
+            <span class="ls-idx">03</span>
+            <h3>Kalória és makrók, számolás nélkül</h3>
+            <p>Beírod, mit ettél, és látod a napi keretet: mennyi maradt, és hogy áll a fehérje, a szénhidrát és a zsír. Étkezésenként bontva.</p>
+            <ul class="ls-chips"><li>Napi kalóriakeret</li><li>Fehérje, szénhidrát, zsír</li><li>Reggeli, ebéd, vacsora</li></ul>
+          </article>
+          <article class="live-step" data-step="social">
+            <span class="ls-idx">04</span>
+            <h3>Receptek, kalóriával együtt</h3>
+            <p>Ha elfogyott az ötlet, van honnan választani. Minden fogásnál ott a kalória, és egy koppintással a naplódba kerül.</p>
+            <ul class="ls-chips"><li>Népszerű receptek</li><li>Kalória fogásonként</li><li>Egy koppintás a naplóba</li></ul>
+          </article>
+          <article class="live-step" data-step="map">
+            <span class="ls-idx">05</span>
+            <h3>Közösség: hírfolyam, térkép, események</h3>
+            <p>Látod, mit csinálnak a többiek, hol edzenek a környékeden, milyen versenyek jönnek, és hol tartasz hozzájuk képest.</p>
+            <ul class="ls-chips"><li>Hírfolyam</li><li>Térkép</li><li>Események</li><li>Díjak</li></ul>
+          </article>
+              </div>
+    </section>
+
+    <section class="section app-week">
+      <h2>Egy heted a FITRON-nal</h2>
+      <p class="showcase-lead">Nem képernyőket sorolunk fel. Végigmegyünk azon, mikor veszed elő, és mire jó.</p>
+
+      <div class="week-step">
+        <div class="week-txt">
+          <span class="week-tag">Hétfő reggel</span>
+          <h3>Megvan, mit csinálsz ma</h3>
+          <p>Kész edzéstervek otthonra és terembe. Kiválasztod, és mehetsz. Nem a tervezéssel megy el az energiád.</p>
+        </div>
+        <figure class="week-shot"><div class="device week-device"><span class="device-notch"></span><span class="device-btn btn-top"></span><span class="device-btn btn-mid"></span><span class="device-btn btn-low"></span><div class="device-screen"><img src="./assets/screen-workout.jpg" alt="FITRON edzéstervek képernyő" loading="lazy"></div></div></figure>
+      </div>
+
+      <div class="week-step week-step--flip">
+        <div class="week-txt">
+          <span class="week-tag">Amikor elfogy az ötlet</span>
+          <h3>Van mit főzni</h3>
+          <p>Receptek kalóriával és elkészítési idővel. Egy koppintás, és már a naplódban is ott van a bevitel.</p>
+        </div>
+        <figure class="week-shot"><div class="device week-device"><span class="device-notch"></span><span class="device-btn btn-top"></span><span class="device-btn btn-mid"></span><span class="device-btn btn-low"></span><div class="device-screen"><img src="./assets/screen-kitchen.jpg" alt="FITRON receptek képernyő" loading="lazy"></div></div></figure>
+      </div>
+
+      <div class="week-step">
+        <div class="week-txt">
+          <span class="week-tag">Hétvégén</span>
+          <h3>Számokban látod, mennyit léptél</h3>
+          <p>Testsúly, testzsír, körfogatok, edzésszám. Nem homályos érzés, hanem adat, amit hetekre visszanézel.</p>
+        </div>
+        <figure class="week-shot"><div class="device week-device"><span class="device-notch"></span><span class="device-btn btn-top"></span><span class="device-btn btn-mid"></span><span class="device-btn btn-low"></span><div class="device-screen"><img src="./assets/screen-profile.jpg" alt="FITRON testadatok képernyő" loading="lazy"></div></div></figure>
+      </div>
+
     </section>
 
     <section class="section roadmap">
-      <h2>Roadmap</h2>
+      <h2>Ütemterv</h2>
       <div class="timeline">
-        <div class="step done"><span>1</span><p>Android launch előkészítve</p></div>
-        <div class="step"><span>2</span><p>QR kódos gyors letöltés (következő kör)</p></div>
-        <div class="step"><span>3</span><p>iOS release + App Store onboarding</p></div>
+        <div class="step done"><span>1</span><p>Android build kész, zárt teszt fut</p></div>
+        <div class="step done"><span>2</span><p>iOS build fent a TestFlighten, tesztelők meghívva</p></div>
+        <div class="step"><span>3</span><p>Nyilvános megjelenés a Google Playen és az App Store-ban</p></div>
       </div>
     </section>
 
@@ -130,19 +243,38 @@
       <div>
         <h2>A cél egyszerű: jobb forma, erősebb rutin, nagyobb közösség.</h2>
         <p>
-          A FITRON nem csak tracker. Egy olyan platform, ahol az app tényleg segít benne maradni a játékban,
-          és közben összehoz olyan emberekkel, akik ugyanúgy fejlődni akarnak.
-        </p>
+A FITRON nem csak tracker. Egy olyan platform, ahol az app tényleg segít benne maradni a játékban, és közben összehoz olyan emberekkel, akik ugyanúgy fejlődni akarnak.</p>
       </div>
       <a class="btn primary" href="#download">Értesíts a rajtról</a>
     </section>
 
     <section class="section lifestyle">
       <div class="lifestyle-copy">
-        <h2>Edzőtermi energia, digitális támogatással</h2>
-        <p>A valódi motiváció a pályán dől el — a FITRON ott ad extra löketet, amikor már fáradnál.</p>
+        <h2>Az adat ott van, ahol edzel</h2>
+        <p>Nem kell külön alkalmazást nyitogatnod sorozatok között. Beírod a súlyt, az app számolja az XP-t, a szintet és a heti terhelést, te meg mehetsz tovább.</p>
       </div>
-      <img src="./assets/hero-fitron.jpg" alt="FITRON életérzés" />
+      <figure class="lifestyle-media">
+        <img src="./assets/hero-fitron.jpg" alt="Edzés a teremben" loading="lazy" />
+        <span class="lifestyle-glow" aria-hidden="true"></span>
+
+        <div class="hud hud-level">
+          <svg viewBox="0 0 96 96" aria-hidden="true">
+            <circle class="rg-bg" cx="48" cy="48" r="40"></circle>
+            <circle class="rg-fg" cx="48" cy="48" r="40" stroke-dasharray="251.3" stroke-dashoffset="88"></circle>
+          </svg>
+          <div class="hud-mid"><b>2</b><span>SZINT</span></div>
+        </div>
+
+        <div class="hud hud-xp">
+          <b>VAS HARCOS</b>
+          <span>a jelenlegi rangod</span>
+        </div>
+
+        <div class="hud hud-set">
+          <b>+500 XP</b>
+          <span>a mérföldkőért</span>
+        </div>
+      </figure>
     </section>
   </main>
 
@@ -158,6 +290,7 @@
     </nav>
   </footer>
 
+  <script src="/vendor/anime.min.js"></script>
   <script type="module" src="./script.js"></script>
 </body>
 </html>
