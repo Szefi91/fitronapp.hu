@@ -11,9 +11,19 @@
 
 * { box-sizing: border-box; }
 html, body { margin: 0; padding: 0; }
+/* A VASZON hatterét magara a html-re is ratesszuk. Enelkul a body hatterének
+   a vaszonra valo "atoroklesere" tamaszkodnank, amit a Safari NEM vegez el, ha a
+   body-nak sajat pozicionalasa/overflowja van -- iPhone-on ezert lett FEHER az
+   egesz oldal (Szefi jelezte, 2026-08-22 01:53, eles hiba). Ez a fuggoseg most
+   megszunt: a hatter akkor is sotet, ha a body-e valamiert nem festodne ki. */
+html {
+  background-color: #05080f;
+}
+
 body {
   font-family: "Inter", system-ui, -apple-system, Segoe UI, Roboto, Arial, sans-serif;
-  background: radial-gradient(circle at 20% 0%, #0f202b 0%, var(--bg) 52%);
+  background-color: transparent;
+  background-image: radial-gradient(circle at 20% 0%, #0f202b 0%, var(--bg) 52%);
   color: var(--text);
   min-height: 100vh;
   overflow-x: hidden;
