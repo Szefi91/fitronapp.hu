@@ -471,3 +471,82 @@ setInterval(() => {
   }, { threshold: 0.25 });
   io.observe(media);
 })();
+
+/* =========================================================================
+   MOBIL: lepesenkenti keszulek-kep a ragado telefon HELYETT (2026-08-23)
+
+   MIERT: egy teszteloő telefonon HIBANAK nezte a ragado telefont ("beragadt"),
+   mert kis kepernyon a keszulek a hely felet elfoglalja, es nincs mibol latni,
+   hogy ez szandekos. Asztali gepen marad a ragadas, ott ket hasab van.
+
+   HOGYAN: nem duplikalunk HTML-t. A meglevo videokat KLONOZZUK a lepesek ala,
+   es csak az lejatszik, amelyik eppen lathato (akkumulator + adatforgalom).
+   Ha barmi elszall, a lepesek szovege valtozatlanul olvashato marad.
+   ========================================================================= */
+(function () {
+  var mobil = window.matchMedia && window.matchMedia('(max-width:980px)');
+  if (!mobil || !mobil.matches) return;
+
+  var keret = document.querySelector('.live-sticky .live-device');
+  var lepesek = [].slice.call(document.querySelectorAll('.live-step'));
+  if (!keret || !lepesek.length) return;
+
+  // A ragado oszlop videoi mobilon nem kellenek: allitsuk meg oket.
+  [].slice.call(document.querySelectorAll('.live-sticky .live-vid')).forEach(function (v) {
+    try { v.pause(); v.preload = 'none'; } catch (e) {}
+  });
+
+  var sajatVideok = [];
+
+  lepesek.forEach(function (lepes) {
+    var kulcs = lepes.getAttribute('data-step');
+    var eredeti = document.querySelector('.live-sticky .live-vid[data-vid="' + kulcs + '"]');
+    if (!eredeti) return;
+
+    var keretMasolat = keret.cloneNode(false);           // csak a keret, gyerekek nelkul
+    ['device-notch', 'device-btn btn-top', 'device-btn btn-mid', 'device-btn btn-low'].forEach(function (o) {
+      var sp = document.createElement('span'); sp.className = o; keretMasolat.appendChild(sp);
+    });
+    var kepernyo = document.createElement('div');
+    kepernyo.className = 'device-screen';
+
+    var video = eredeti.cloneNode(false);
+    video.classList.add('is-on');
+    video.removeAttribute('autoplay');
+    video.preload = 'none';
+    video.muted = true; video.loop = true; video.playsInline = true;
+
+    kepernyo.appendChild(video);
+    keretMasolat.appendChild(kepernyo);
+
+    var hold = document.createElement('div');
+    hold.className = 'live-step-shot';
+    hold.appendChild(keretMasolat);
+    var fenyfolt = document.createElement('span');
+    fenyfolt.className = 'live-glow'; fenyfolt.setAttribute('aria-hidden', 'true');
+    hold.appendChild(fenyfolt);
+
+    // A kep a cim ES a szoveg utan jojjon, kozvetlenul a chipek ele: igy eloszor
+    // azt olvassa el, MIT lat, es utana latja is.
+    var chipek = lepes.querySelector('.ls-chips');
+    if (chipek) lepes.insertBefore(hold, chipek); else lepes.appendChild(hold);
+    sajatVideok.push(video);
+  });
+
+  if (!sajatVideok.length || !('IntersectionObserver' in window)) return;
+
+  var figyelo = new IntersectionObserver(function (bejegyzesek) {
+    bejegyzesek.forEach(function (b) {
+      var v = b.target;
+      if (b.isIntersecting) {
+        if (v.preload === 'none') { v.preload = 'metadata'; v.load(); }
+        var pr = v.play();
+        if (pr && pr.catch) pr.catch(function () {});   // autoplay-tiltas: a poster marad
+      } else {
+        try { v.pause(); } catch (e) {}
+      }
+    });
+  }, { threshold: 0.45 });
+
+  sajatVideok.forEach(function (v) { figyelo.observe(v); });
+})();

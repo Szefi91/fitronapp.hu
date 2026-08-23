@@ -936,3 +936,30 @@ body > *{position:relative;z-index:1}
 .lang-list li a{border:1px solid rgba(57,255,106,.24);background:rgba(57,255,106,.07);color:#cfe6d8}
 .lang-list li a:hover{border-color:rgba(57,255,106,.5);color:#eafff1}
 .lang-list li a.is-current{background:linear-gradient(120deg,rgba(57,255,106,.9),rgba(138,255,200,.9));color:#04140a;font-weight:800;border-color:transparent}
+
+/* =========================================================================
+   MOBIL: NINCS RAGADÓ TELEFON (2026-08-23, Szefi teszteloi visszajelzese)
+   Egy telefonon nezo ember azt hitte, HIBA: a keszulek megall a kepernyo
+   kozepen, tobb mint a fele helyet elfoglalja, es a szekcio cime is bekerul
+   moge. Asztali gepen ennek van ertelme (ket hasab egymas mellett), mobilon
+   nincs hely jelezni, hogy szandekos.
+   MEGOLDAS: mobilon a ragado oszlop eltunik, es MINDEN lepes ala bekerul a
+   sajat keszulek-kepe (a JS klonozza ugyanazt a videot, nincs duplikalt HTML).
+   ========================================================================= */
+.live-step-shot{display:none}
+
+@media (max-width:980px){
+  .live-sticky{display:none}
+  .live-step{min-height:0;padding-bottom:6px}
+  .live-step-shot{
+    display:flex;justify-content:center;margin:18px 0 6px;position:relative;
+  }
+  .live-step-shot .live-device{width:min(210px,58vw)}
+  .live-step-shot .live-glow{
+    position:absolute;left:50%;top:50%;transform:translate(-50%,-50%);
+    width:112%;aspect-ratio:1;border-radius:50%;z-index:-1;filter:blur(14px);
+    background:radial-gradient(circle,rgba(57,255,106,.18),rgba(122,92,255,.10) 46%,transparent 68%);
+  }
+  /* A lepes-video mindig latszik: itt nincs valtogatas, minden lepesnek sajatja van. */
+  .live-step-shot .live-vid{position:static;opacity:1;transform:none}
+}

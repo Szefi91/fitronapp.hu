@@ -3,3 +3,7 @@ dist/
 .vscode/
 .DS_Store
 Thumbs.db
+
+# Helyi Firebase-konfig az admin feluletehez. SOHA nem kerul a repoba.
+.env
+.env.local

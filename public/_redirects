@@ -1,0 +1,3 @@
+# Ajanloi rovid link: /r/FIT123456 -> a fooldal, a kodot a referral.js olvassa ki az utvonalbol.
+# 200-as (rewrite), NEM 301: igy a bongeszo cimsoraban MEGMARAD a kod, kulonben elveszne.
+/r/*  /index.html  200
