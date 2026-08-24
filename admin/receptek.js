@@ -120,29 +120,34 @@ let szerkesztettRecept = null;   // { id?, adat }
 
 /* ------------------------------ lista ------------------------------ */
 
+/**
+ * A kártya SZÁNDÉKOSAN az app Konyha-oldalának receptkártyáját követi (Kitchen.tsx):
+ * kép felül, rajta a kalória-jelvény, alatta dőlt nagybetűs cím és az elkészítési idő.
+ * Szefi kérése (2026-08-24): "ott is dizájnban hasonló legyen mint ami az applikáció".
+ * Így szerkesztés közben azt látja, amit a felhasználó is látni fog.
+ */
 function receptKartya(r) {
-  const makro = [
-    `${Number(r.kcal) || 0} kcal`,
-    `F ${Number(r.protein) || 0}g`,
-    `Sz ${Number(r.carbs) || 0}g`,
-    `Zs ${Number(r.fat) || 0}g`,
-  ].join(' · ');
+  const premium = r.isPremium === true;
+  const hozzavalok = Array.isArray(r.ingredients) ? r.ingredients.length : 0;
+  const makro = `F ${Number(r.protein) || 0} · Sz ${Number(r.carbs) || 0} · Zs ${Number(r.fat) || 0}`;
   return `
-    <article class="huzhato" data-recept-id="${esc(r.id)}">
-      ${r.image ? `<div class="huzhato-kep" style="background-image:url('${esc(r.image)}')"></div>` : ''}
-      <div class="huzhato-fo">
-        <strong>${esc(r.title || '(névtelen)')}</strong>
-        <div class="huzhato-meta">
-          🍽️ ${esc(kategoriaNev(r.category))} · ${esc(makro)}
-          ${r.prepTime ? ` · ⏱️ ${esc(r.prepTime)}` : ''}
-          · ${(Array.isArray(r.ingredients) ? r.ingredients.length : 0)} hozzávaló
-          ${r.published === false ? ' · <span class="piszkozat-jel">piszkozat</span>' : ''}
-        </div>
+    <article class="recept-kartya${premium ? ' premium' : ''}" data-recept-id="${esc(r.id)}">
+      <div class="recept-kep" ${r.image ? `style="background-image:url('${esc(r.image)}')"` : ''}>
+        <span class="recept-kcal">${Number(r.kcal) || 0} kcal</span>
+        ${premium ? '<span class="recept-zar">🔒 Prémium</span>' : ''}
+        ${r.published === false ? '<span class="recept-piszkozat">Piszkozat</span>' : ''}
       </div>
-      ${r.isPremium === true ? '<span class="jelzo intezkedve">Prémium</span>' : ''}
-      <div class="huzhato-gombok">
-        <button class="masodlagos kicsi" data-recept-szerk="${esc(r.id)}">Szerk.</button>
-        <button class="veszelyes kicsi" data-recept-torol="${esc(r.id)}" data-recept-nev="${esc(r.title || '')}">Törlés</button>
+      <div class="recept-fo">
+        <h3>${esc(r.title || '(névtelen)')}</h3>
+        <div class="recept-also">
+          <span class="recept-ido">${esc(r.prepTime || kategoriaNev(r.category))}</span>
+          <span class="recept-makro">${esc(makro)}</span>
+        </div>
+        <div class="recept-meta">${esc(kategoriaNev(r.category))} · ${hozzavalok} hozzávaló</div>
+        <div class="recept-gombok">
+          <button class="masodlagos kicsi" data-recept-szerk="${esc(r.id)}">Szerkesztés</button>
+          <button class="veszelyes kicsi" data-recept-torol="${esc(r.id)}" data-recept-nev="${esc(r.title || '')}">Törlés</button>
+        </div>
       </div>
     </article>`;
 }
@@ -251,7 +256,7 @@ export async function receptekNezet({ db }) {
     return fejlec + `<p class="ures">Ez a gyűjtemény üres. Az app ilyenkor a beépített
       tartaléklistát mutatja, tehát a felhasználók addig is látnak recepteket.</p>`;
   }
-  return fejlec + `<div class="lista">${tetelek.map(receptKartya).join('')}</div>`;
+  return fejlec + `<div class="recept-racs">${tetelek.map(receptKartya).join('')}</div>`;
 }
 
 /* ------------------------------ export: események ------------------------------ */

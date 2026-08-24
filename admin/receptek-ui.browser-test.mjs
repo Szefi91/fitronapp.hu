@@ -30,7 +30,9 @@ const lista = (await p.locator('body').innerText()).toLowerCase();
 ok('Nincs nyers JSON-textarea a listán', !(await p.locator('#szerk-json').count()));
 ok('A két recept látszik', lista.includes('fehérjés zabkása') && lista.includes('édesburgonyás csirke'));
 ok('Piszkozat-jel a nem publikáltnál', lista.includes('piszkozat'));
-ok('Makró-adatok a kártyán', lista.includes('420 kcal') && lista.includes('32g'));
+// A kartya az app Konyha-oldalanak formatumat koveti: kaloria-jelveny a kepen,
+// a makro rovid alakban (F/Sz/Zs), nem 'g'-vel.
+ok('Kalória-jelvény és makrók a kártyán', lista.includes('420 kcal') && lista.includes('f 32'));
 
 // 1) Meglévő recept szerkesztése: a mezők fel vannak töltve, nem JSON.
 // SZANDEKOSAN azonositora megyunk, nem a lista elso elemere: a lista magyar ABC szerint rendez
