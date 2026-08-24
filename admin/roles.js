@@ -11,7 +11,7 @@ const KEPESSEGEK = {
   user: [],
   support: ['view_user_billing', 'grant_access'],
   moderator: ['moderate_reports'],
-  admin: ['moderate_reports', 'view_user_billing', 'grant_access', 'manage_content', 'manage_partners', 'view_payouts'],
+  admin: ['moderate_reports', 'view_user_billing', 'grant_access', 'manage_content', 'manage_partners', 'view_payouts', 'manage_users'],
 };
 
 export function roleOf(profil) {

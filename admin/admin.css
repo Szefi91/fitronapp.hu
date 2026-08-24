@@ -11,6 +11,10 @@
   --warn: #ffc857;
   --border: rgba(123, 255, 158, 0.14);
 }
+/* Kozepre igazitott tartalom-oszlop. A fejlec/fulsav SAVJA teljes szeles marad (kulonben
+   lebegne a sotet hatteren), de a TARTALMUK ugyanarra az oszlopra all be, mint a main. */
+:root { --oszlop: 1100px; --oszlop-margo: max(20px, calc((100% - var(--oszlop)) / 2)); }
+
 * { box-sizing: border-box; }
 html { background-color: var(--bg); }
 body {
@@ -31,7 +35,12 @@ body {
 .belepes p.alcim { color: var(--muted); margin: 0 0 22px; font-size: .92rem; }
 .mezo { display: block; margin-bottom: 12px; text-align: left; }
 .mezo span { display: block; font-size: .72rem; letter-spacing: .14em; text-transform: uppercase; color: var(--muted); margin-bottom: 6px; }
-input[type="email"], input[type="password"], input[type="text"], textarea, select {
+/* A tipus-lista SZANDEKOSAN bo: ami kimarad belole, az a bongeszo alap (vilagos) mezojet
+   kapja a sotet urlapon -- 2026-08-24-en pont igy lettek vilagosak a szam-mezok a recept-
+   szerkesztoben (kaloria, feherje, szenhidrat, zsir). Uj mezo-tipusnal ezt a sort bovitsd. */
+input[type="email"], input[type="password"], input[type="text"], input[type="number"],
+input[type="url"], input[type="search"], input[type="date"], input[type="time"],
+textarea, select {
   width: 100%; padding: 11px 13px; border-radius: 11px; background: var(--panel-2);
   border: 1px solid var(--border); color: var(--text); font: inherit;
 }
@@ -48,7 +57,7 @@ button:disabled { opacity: .5; cursor: default; }
 /* --- keret --- */
 .fejlec {
   display: flex; align-items: center; gap: 14px; flex-wrap: wrap;
-  padding: 14px 20px; border-bottom: 1px solid var(--border); background: var(--panel);
+  padding: 14px var(--oszlop-margo); border-bottom: 1px solid var(--border); background: var(--panel);
   position: sticky; top: 0; z-index: 5;
 }
 .fejlec h1 { font-size: 1rem; margin: 0; letter-spacing: .04em; }
@@ -60,14 +69,14 @@ button:disabled { opacity: .5; cursor: default; }
 }
 .ki { font-size: .84rem; color: var(--muted); }
 
-.fulek { display: flex; gap: 6px; padding: 12px 20px 0; flex-wrap: wrap; }
+.fulek { display: flex; gap: 6px; padding: 12px var(--oszlop-margo) 0; flex-wrap: wrap; }
 .ful {
   background: transparent; color: var(--muted); border: 1px solid transparent;
   padding: 8px 14px; border-radius: 10px 10px 0 0; font-size: .86rem;
 }
 .ful.aktiv { color: var(--text); background: var(--panel); border-color: var(--border); border-bottom-color: var(--panel); }
 
-main { padding: 20px; max-width: 1100px; }
+main { padding: 20px; max-width: var(--oszlop); margin: 0 auto; width: 100%; }
 .ures { color: var(--muted); padding: 28px 0; }
 
 .lista { display: grid; gap: 10px; }
@@ -112,3 +121,243 @@ main { padding: 20px; max-width: 1100px; }
 /* "vagy" elvalaszto a ket belepesi mod kozott */
 .valaszto { display: flex; align-items: center; gap: 10px; margin: 14px 0; color: var(--muted); font-size: .72rem; text-transform: uppercase; letter-spacing: .14em; }
 .valaszto::before, .valaszto::after { content: ''; flex: 1; height: 1px; background: rgba(255,255,255,.08); }
+
+/* ---------------- edzésterv-szerkesztő ----------------
+   A gyakorlatok külön dobozban, hogy vizuálisan is elváljanak egymástól: egy tervben
+   tíz-húsz gyakorlat is lehet, és egybefolyó mezők közt nem lehet dolgozni. */
+.gyak-cim { margin: 22px 0 10px; font-size: 15px; letter-spacing: .02em; }
+.gyak-cim span { color: var(--halvany, #94a3b8); font-weight: 400; }
+
+.gyak {
+  border: 1px solid rgba(148, 163, 184, .18);
+  border-radius: 12px;
+  padding: 14px;
+  margin-bottom: 12px;
+  background: rgba(148, 163, 184, .05);
+}
+.gyak-fej { display: flex; align-items: center; gap: 10px; margin-bottom: 10px; }
+.gyak-fej input { flex: 1; }
+.gyak-szam { color: var(--halvany, #94a3b8); font-variant-numeric: tabular-nums; min-width: 26px; }
+
+.gyak-racs { display: grid; grid-template-columns: repeat(3, 1fr); gap: 10px; margin-bottom: 10px; }
+.gyak-racs label { display: flex; flex-direction: column; gap: 4px; font-size: 12px; color: var(--halvany, #94a3b8); }
+.gyak-racs input, .gyak-racs select { width: 100%; }
+
+/* Keskeny kepernyon egymas ala, kulonben a mezok osszenyomodnak es olvashatatlanok. */
+@media (max-width: 720px) { .gyak-racs { grid-template-columns: 1fr; } }
+
+.pipa { flex-direction: row !important; align-items: center; gap: 8px !important; }
+.pipa input { width: auto; }
+button.kicsi { padding: 6px 12px; font-size: 12px; }
+
+/* ---------------- edzésterv-kártyák ----------------
+   A listán látszódjon a terv SZERKEZETE (hány gyakorlat, mennyi videóval), ne csak a neve:
+   így szerkesztés előtt is tudni, melyik terv hol tart. */
+.terv-lista { display: grid; grid-template-columns: repeat(auto-fill, minmax(340px, 1fr)); gap: 14px; }
+.terv-kartya {
+  border: 1px solid rgba(148, 163, 184, .18); border-radius: 14px; overflow: hidden;
+  background: rgba(148, 163, 184, .05); display: flex; flex-direction: column;
+}
+.terv-kep { height: 120px; background-size: cover; background-position: center; }
+.terv-fo { padding: 14px; display: flex; flex-direction: column; gap: 10px; }
+.terv-fej { display: flex; align-items: center; gap: 8px; flex-wrap: wrap; }
+.terv-fej strong { font-size: 15px; }
+.terv-adatok { display: flex; flex-wrap: wrap; gap: 8px; font-size: 12px; color: var(--halvany, #94a3b8); }
+.terv-adatok span { background: rgba(148, 163, 184, .12); padding: 3px 9px; border-radius: 999px; }
+.terv-gyak { font-size: 13px; color: var(--halvany, #94a3b8); }
+.terv-gyak strong { color: inherit; }
+.terv-elsok { margin-top: 4px; font-size: 12px; opacity: .85; }
+.jelzo.aktiv { background: rgba(34, 197, 94, .15); color: #4ade80; }
+.jelzo.szunetel { background: rgba(148, 163, 184, .15); color: #94a3b8; }
+
+/* A felhasználó-soron a szerepkör-választó és a szerkesztés egymás mellett */
+.szerep-valaszto { display: flex; align-items: center; gap: 8px; }
+hr.valaszto { border: 0; border-top: 1px solid rgba(148,163,184,.18); margin: 20px 0 14px; }
+
+/* ---------------- csomag-szerkesztő ---------------- */
+.szin-sor { display: flex; align-items: center; gap: 8px; flex-wrap: wrap; }
+.szin {
+  width: 30px; height: 30px; border-radius: 999px; border: 2px solid transparent;
+  cursor: pointer; padding: 0;
+}
+.szin.valasztott { border-color: #fff; box-shadow: 0 0 0 2px rgba(255,255,255,.25); }
+#cs-szin { width: 44px; height: 30px; padding: 0; border: 0; background: none; cursor: pointer; }
+
+.terv-valaszto {
+  max-height: 260px; overflow-y: auto; border: 1px solid rgba(148,163,184,.18);
+  border-radius: 12px; padding: 8px;
+}
+.terv-sor {
+  display: flex; align-items: center; gap: 10px; padding: 7px 8px; border-radius: 8px;
+  font-size: 13px;
+}
+.terv-sor:hover { background: rgba(148,163,184,.08); }
+.terv-sor input { width: auto; }
+/* Ami masik csomagban van, azt NEM lehet ide tenni (egy terv egy csomag) -- de latszodjon, MIERT. */
+.terv-sor.foglalt { opacity: .5; }
+.terv-sor em { margin-left: auto; font-size: 11px; color: var(--halvany, #94a3b8); font-style: normal; }
+
+/* ================= csomag-sávok (drag & drop) =================
+   Szefi kerese (2026-08-24): "a szerkeszto is adja vissza az app kinezetet, igy konnyebben
+   vizualizaljuk". Ezert a savok es a kartyak az app sotet, lekerekitett, szines-jelzos
+   stilusat koveti, nem egy szurke admin-tablazatot. */
+.csomag-sav {
+  border: 1px solid rgba(148,163,184,.16);
+  border-left: 5px solid var(--csomag-szin, #22c55e);
+  border-radius: 16px;
+  margin-bottom: 14px;
+  background: linear-gradient(180deg, color-mix(in srgb, var(--csomag-szin, #22c55e) 7%, transparent), transparent 60%);
+  overflow: hidden;
+}
+.csomag-sav.nincs-csomag { border-left-color: rgba(148,163,184,.35); background: rgba(148,163,184,.04); }
+
+.csomag-fej { display: flex; align-items: center; gap: 10px; padding: 12px 14px; flex-wrap: wrap; }
+.csomag-fej strong { font-size: 15px; }
+.csomag-db { color: var(--halvany, #94a3b8); font-size: 12px; }
+.csomag-muveletek { margin-left: auto; display: flex; gap: 6px; }
+.fogo { cursor: grab; color: var(--halvany, #94a3b8); letter-spacing: -2px; user-select: none; }
+
+/* A dobó-terület akkor is látszódjon, ha üres: különben nem tudni, hova lehet húzni. */
+.csomag-tartalom {
+  display: flex; flex-wrap: wrap; gap: 10px;
+  padding: 12px 14px 16px; min-height: 74px;
+  transition: background .15s ease;
+}
+.csomag-tartalom.cel-alatt { background: color-mix(in srgb, var(--csomag-szin, #22c55e) 14%, transparent); }
+.csomag-tartalom.mentes-alatt { opacity: .5; pointer-events: none; }
+.dobj-ide {
+  width: 100%; text-align: center; border: 1px dashed rgba(148,163,184,.3);
+  border-radius: 12px; padding: 14px; margin: 0;
+}
+
+/* Húzható terv-kártya: az app kártyáinak arányait követi (kép + cím + meta) */
+.huzhato {
+  width: 232px; border-radius: 14px; overflow: hidden; cursor: grab;
+  border: 1px solid rgba(148,163,184,.18); background: rgba(15,23,42,.6);
+}
+.huzhato:active { cursor: grabbing; }
+.huzhato.huzas-alatt { opacity: .4; }
+.huzhato-kep { height: 84px; background-size: cover; background-position: center; }
+.huzhato-fo { padding: 10px 12px 6px; }
+.huzhato-fo strong { font-size: 13px; display: block; line-height: 1.3; }
+.huzhato-meta { font-size: 11px; color: var(--halvany, #94a3b8); margin-top: 4px; }
+.piszkozat-jel { color: #fbbf24; }
+.huzhato-gombok { display: flex; gap: 4px; padding: 0 10px 10px; }
+.huzhato-gombok button { flex: 1; padding: 5px 4px; font-size: 11px; }
+
+/* ================= app-előnézet =================
+   Telefon-keret, az app sötét stílusával, ugyanabból az adatból. */
+.telefon-keret {
+  width: min(390px, 96vw); margin: 0 auto; padding: 16px 14px 28px;
+  border: 8px solid #1e293b; border-radius: 36px; background: #050505;
+}
+.telefon-fejlec { font-weight: 800; font-style: italic; letter-spacing: -.02em; margin-bottom: 14px; }
+.telefon-fejlec span { color: #22c55e; }
+.app-csomag {
+  border-radius: 18px; padding: 14px; margin-bottom: 12px;
+  background: linear-gradient(160deg, color-mix(in srgb, var(--csomag-szin, #22c55e) 22%, #0b1220), #0b1220);
+  border: 1px solid color-mix(in srgb, var(--csomag-szin, #22c55e) 40%, transparent);
+}
+.app-csomag-fej { display: flex; align-items: center; gap: 8px; margin-bottom: 8px; }
+.app-cimke { font-size: 9px; font-weight: 800; letter-spacing: .1em; padding: 3px 8px; border-radius: 999px; color: #04140a; }
+.app-premium { margin-left: auto; font-size: 9px; font-weight: 800; letter-spacing: .1em; color: #fbbf24; }
+.app-csomag-cim { font-size: 17px; font-weight: 800; font-style: italic; letter-spacing: -.02em; }
+.app-kat { font-size: 11px; color: var(--halvany, #94a3b8); margin-top: 2px; }
+.app-tervek { margin-top: 10px; display: flex; flex-direction: column; gap: 6px; }
+.app-terv {
+  display: flex; justify-content: space-between; gap: 10px; font-size: 12px;
+  background: rgba(255,255,255,.05); border-radius: 10px; padding: 8px 10px;
+}
+.app-terv span { color: var(--halvany, #94a3b8); }
+.app-ures { font-size: 12px; color: var(--halvany, #94a3b8); font-style: italic; padding: 6px 2px; }
+.app-kulon { margin-top: 16px; }
+.app-kulon-cim { font-size: 11px; font-weight: 800; letter-spacing: .1em; color: var(--halvany, #94a3b8); margin-bottom: 8px; }
+
+/* Kép-mező: link + feltöltés gomb egy sorban, alatta előnézet */
+.kep-mezo { display: flex; gap: 6px; align-items: center; }
+.kep-mezo input[type="url"] { flex: 1; min-width: 0; }
+.kep-elonezet {
+  margin-top: 8px; height: 90px; border-radius: 10px;
+  background-size: cover; background-position: center;
+  border: 1px solid rgba(148,163,184,.18);
+}
+
+/* ---------------- jelentések: a bejelentett tartalom ---------------- */
+.tetel.jelentes { flex-direction: column; align-items: stretch; }
+.jelentes-fej { display: flex; align-items: center; gap: 10px; margin-bottom: 4px; }
+.jelentett {
+  margin: 10px 0; padding: 12px; border-radius: 12px;
+  background: rgba(148,163,184,.06); border: 1px solid rgba(148,163,184,.14);
+}
+.jelentett.hianyzik { font-style: italic; color: var(--halvany, #94a3b8); font-size: 13px; }
+.jelentett-fej { display: flex; align-items: center; gap: 8px; margin-bottom: 6px; }
+.jelentett-avatar { width: 26px; height: 26px; border-radius: 999px; object-fit: cover; }
+.jelentett-szoveg { margin: 6px 0; font-size: 14px; white-space: pre-wrap; }
+.jelentett-kep { max-width: 260px; max-height: 200px; border-radius: 10px; display: block; margin-top: 6px; }
+
+/* ------- JELENTÉSEK fül: szűrő-sáv + összevont okok (Nagato, 2026-08-24) ------- */
+.szuro-sav { display: flex; gap: 8px; flex-wrap: wrap; margin-bottom: 16px; }
+.szuro {
+  background: var(--panel-2); color: var(--muted); border: 1px solid var(--border);
+  border-radius: 99px; padding: 7px 14px; font-size: .82rem; font-weight: 700; cursor: pointer;
+  display: inline-flex; align-items: center; gap: 7px;
+}
+.szuro:hover { color: var(--text); }
+.szuro.aktiv { background: rgba(57,255,106,.14); color: var(--primary); border-color: rgba(57,255,106,.4); }
+.szuro-szam {
+  font-size: .72rem; font-weight: 800; background: rgba(255,255,255,.06);
+  color: inherit; border-radius: 99px; padding: .1em .5em; min-width: 1.5em; text-align: center;
+}
+.jelzo.tobb { background: rgba(255,200,87,.16); color: var(--warn); }
+.okok { list-style: none; margin: 10px 0 0; padding: 0; display: flex; flex-direction: column; gap: 6px; }
+.ok-sor {
+  display: flex; flex-wrap: wrap; align-items: baseline; gap: 8px;
+  font-size: .82rem; padding: 7px 10px; background: var(--panel-2);
+  border: 1px solid var(--border); border-radius: 8px;
+}
+.ok-jelento { font-weight: 700; color: var(--text); }
+.ok-szoveg { color: var(--muted); }
+
+/* Kattintható jelentő-név a JELENTÉSEK fülön (link-kinézetű gomb) */
+.link {
+  background: none; border: 0; padding: 0; margin: 0; font: inherit; cursor: pointer;
+  color: var(--primary); text-decoration: underline; text-underline-offset: 2px;
+}
+.link:hover { filter: brightness(1.15); }
+.ok-jelento.link { font-weight: 700; }
+
+/* Az ESEMÉNYEK fül kártyái (.huzhato, Aurora modulja) a .lista egyoszlopos rácsában
+   232px-es keskeny csíkká álltak össze, a jobb oldal meg üresen maradt. Itt rácsba
+   tesszük őket, hogy kihasználják a szélességet. Csak ott hat, ahol tényleg
+   ilyen kártyák vannak, a többi lista (jelentések, receptek) érintetlen. */
+.lista:has(> .huzhato) { grid-template-columns: repeat(auto-fill, minmax(250px, 1fr)); gap: 14px; }
+.lista > .huzhato { width: auto; }
+
+/* ---------------- Felhasználók fül: kereső, tömeges sáv, lapozó (Szefi, 2026-08-24) ---------------- */
+.felh-kereso-sor { margin-bottom: 12px; }
+.felh-kereso-sor input[type="search"] {
+  width: 100%; max-width: 380px; padding: 10px 13px; border-radius: 11px;
+  background: var(--panel-2); border: 1px solid var(--border); color: var(--text); font: inherit;
+}
+.felh-sav {
+  display: flex; align-items: center; gap: 12px; flex-wrap: wrap;
+  padding: 10px 12px; margin-bottom: 12px; border-radius: 12px;
+  background: rgba(255,255,255,.03); border: 1px solid rgba(255,255,255,.07);
+}
+.felh-sav .pipa { display: flex; align-items: center; gap: 8px; font-size: .86rem; margin: 0; }
+.felh-sav .pipa input { width: 18px; height: 18px; accent-color: var(--primary); }
+.felh-jelolo { display: flex; align-items: center; padding-top: 2px; }
+.felh-jelolo input { width: 18px; height: 18px; accent-color: var(--primary); }
+.lapozo { display: flex; align-items: center; justify-content: center; gap: 14px; margin-top: 16px; font-size: .86rem; color: var(--muted); }
+
+/* Telefonon a felhasználó-sor (jelölő + adatok + szerepkör-választó + gomb) kifutott
+   a képernyőről. Itt törik: a szerepkör-sor önálló sorba kerül és kitölti a szélességet. */
+@media (max-width: 560px) {
+  .tetel { flex-wrap: wrap; }
+  .tetel .szerep-valaszto { width: 100%; }
+  .tetel .szerep-valaszto select { flex: 1; min-width: 0; }
+}
+
+/* "frissítés..." jelzés a felhasználó-kereső mellett: a lista a gyorsítótárból már látszik,
+   a szerver válasza pedig a háttérben jön. Halvány, hogy ne vonja el a figyelmet. */
+.felh-frissul { margin-left: 10px; font-size: .78rem; color: var(--muted); }

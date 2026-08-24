@@ -14,9 +14,6 @@ import { getFirestore, doc, getDoc, collection, getDocs, updateDoc, query, where
 import { getFunctions, httpsCallable } from 'firebase/functions';
 import { getStorage, ref as tarolóRef, uploadBytes, getDownloadURL } from 'firebase/storage';
 import { can, roleOf, hasStaffAccess, SZEREP_NEVEK } from './roles.js';
-import { jelentesekNezet, jelentesekEsemenyek } from './jelentesek.js';
-import { esemenyekNezet, esemenyekEsemenyek } from './esemenyek.js';
-import { receptekNezet, receptekEsemenyek } from './receptek.js';
 import { osszeallitPartner, kulcsSzoveg, ertelmezKulcs } from './partner-utils.js';
 
 const konfig = {
@@ -123,13 +120,78 @@ function keret(tartalom) {
     aktivFul = b.dataset.ful;
     // Fulvaltasnal a nyitott szerkesztok bezarulnak, kulonben a masik fulon is az urlap latszana.
     szerkesztettTetel = null; szerkesztettPartner = null; szerkesztettFelhasznalo = null; szerkesztettCsomag = null;
-    felhKereses = ''; felhOldal = 1; felhJeloltek.clear();
     ujraRajzol();
   }));
 }
 
 /* ------------------------------ nézetek ------------------------------ */
 
+/* A jelentes onmagaban CSAK annyit mondott, hogy "Poszt jelentve" + egy azonosito. Ugy nem lehet
+   moderalni: a moderatornak LATNIA kell, MIT jelentettek. Ezert a jelentes melle betoltjuk a
+   bejelentett tartalmat is (poszt szovege, kepe, szerzoje), es egy kattintassal torolheto.
+   Szefi kerese (2026-08-24): "milyen jelenteseket kerultek be milyen posztok". */
+async function jelentesekNezet() {
+  const snap = await getDocs(query(collection(db, 'reports'), limit(100)));
+  const tetelek = snap.docs.map((d) => ({ id: d.id, ...d.data() }));
+  if (!tetelek.length) return '<p class="ures">Nincs jelentés. Ez jó hír.</p>';
+
+  /* A bejelentett tartalmak betoltese EGYSZERRE (nem sorban), kulonben 20 jelentesnel
+     20 egymas utani kerest varnank meg. A hianyzot (mar torolt) nem tekintjuk hibanak. */
+  const tartalmak = new Map();
+  await Promise.all(tetelek.map(async (r) => {
+    if (!r.targetId) return;
+    const ut = r.targetType === 'user' ? 'users' : 'posts';
+    try {
+      const d = await getDoc(doc(db, ut, r.targetId));
+      if (d.exists()) tartalmak.set(r.targetId, { ut, ...d.data() });
+    } catch { /* jogosultsag vagy halozat -- a jelentes ettol meg latszodjon */ }
+  }));
+
+  const rend = { open: 0, reviewed: 1, actioned: 2 };
+  tetelek.sort((a, b) => (rend[a.status] ?? 9) - (rend[b.status] ?? 9));
+
+  const cimke = { open: ['nyitott', 'Nyitott'], reviewed: ['atnezve', 'Átnézve'], actioned: ['intezkedve', 'Intézkedve'] };
+  return `<div class="lista">${tetelek.map((r) => {
+    const [osztaly, nev] = cimke[r.status] || ['nyitott', r.status];
+    const tart = tartalmak.get(r.targetId);
+    const felhasznaloE = r.targetType === 'user';
+    return `<article class="tetel jelentes">
+      <div class="fo">
+        <div class="jelentes-fej">
+          <strong>${esc(felhasznaloE ? 'Felhasználó' : 'Poszt')} jelentve</strong>
+          <span class="jelzo ${osztaly}">${esc(nev)}</span>
+        </div>
+        <div class="meta">Ok: ${esc(r.reason || '(nincs megadva)')}</div>
+
+        ${tart ? `
+          <div class="jelentett">
+            <div class="jelentett-fej">
+              ${tart.userAvatar || tart.avatar ? `<img class="jelentett-avatar" src="${esc(tart.userAvatar || tart.avatar)}" alt="" />` : ''}
+              <strong>${esc(tart.userName || tart.name || '(névtelen)')}</strong>
+              ${tart.timestamp ? `<span class="meta">${esc(String(tart.timestamp).slice(0, 16).replace('T', ' '))}</span>` : ''}
+            </div>
+            ${tart.content ? `<p class="jelentett-szoveg">${esc(tart.content)}</p>` : ''}
+            ${tart.image ? `<img class="jelentett-kep" src="${esc(tart.image)}" alt="" />` : ''}
+            ${felhasznaloE ? `<div class="meta">Szint: ${esc(tart.level ?? '?')} · ${esc(tart.tier || 'Scout')}</div>` : ''}
+          </div>`
+          : `<p class="jelentett hianyzik">A bejelentett tartalom már nem érhető el (törölték, vagy nincs jogom olvasni).</p>`}
+
+        <div class="muveletek">
+          <button data-jelentes="${esc(r.id)}" data-uj="reviewed" class="masodlagos">Átnézve</button>
+          <button data-jelentes="${esc(r.id)}" data-uj="actioned">Intézkedve</button>
+          <button data-jelentes="${esc(r.id)}" data-uj="open" class="masodlagos">Visszanyit</button>
+          ${tart && !felhasznaloE
+            ? `<button class="veszelyes kicsi" data-poszt-torol="${esc(r.targetId)}" data-jelentes-id="${esc(r.id)}">Poszt törlése</button>`
+            : ''}
+        </div>
+      </div>
+    </article>`;
+  }).join('')}</div>`;
+}
+
+/* Az EDZESTERV nem sor, hanem KARTYA: Szefi (2026-08-24) azt kerte, hogy a listan is latszodjon
+   a terv SZERKEZETE, ugy ahogy az appban meg fog jelenni -- kulonben csak nevek vannak, es
+   szerkesztes elott meg kell nyitni mindet, hogy kiderüljon, melyik az. */
 function tervKartya(t) {
   const gyak = Array.isArray(t.exercises) ? t.exercises : [];
   const videos = gyak.filter((e) => e && e.videoUrl).length;
@@ -181,7 +243,7 @@ async function tervekNezet() {
   csomagok.sort((a, b) => (a.sorrend ?? 999) - (b.sorrend ?? 999));
 
   const fejlec = `<div class="muveletek" style="margin-bottom:16px">
-    <button data-uj-tetel="workoutPlans">Új edzésterv</button>
+    <button data-uj="workoutPlans">Új edzésterv</button>
     <button class="masodlagos" data-uj-csomag>Új csomag</button>
     <button class="masodlagos" data-elonezet>Előnézet: hogy néz ki az appban</button>
   </div>
@@ -249,7 +311,7 @@ async function tartalomNezet(kollekcio, cimMezo) {
   const snap = await getDocs(query(collection(db, kollekcio), limit(100)));
   const tetelek = snap.docs.map((d) => ({ id: d.id, ...d.data() }));
   const fejlec = `<div class="muveletek" style="margin-bottom:14px">
-    <button data-uj-tetel="${esc(kollekcio)}">Új felvétele</button></div>`;
+    <button data-uj="${esc(kollekcio)}">Új felvétele</button></div>`;
   if (!tetelek.length) {
     return fejlec + `<p class="ures">Ez a gyűjtemény üres. Az app ilyenkor a beépített tartaléklistát használja.</p>`;
   }
@@ -386,42 +448,26 @@ function csomagSzerkesztoNezet() {
 
 const SZEREP_SORREND = ['admin', 'moderator', 'support', 'user'];
 
-/* ------------------------------ felhasználók -------------------------------
- * Szefi kérése (2026-08-24): "10-esével lapozás, keresés névre és e-mailre, jelölés,
- * tömeges törlés". Néhány száz felhasználónál egy végtelen lista használhatatlan.
- *
- * MIÉRT KLIENS-OLDALI a keresés és a lapozás: a listát a listUsers Cloud Function adja
- * EGYBEN (az e-mail csak ott érhető el, a users/{uid} dokumentumban szándékosan nincs).
- * Egy szerver-oldali kereséshez minden leütésre CF-hívás menne. Amíg a felhasználószám
- * ezres nagyságrend alatt van, a szűrés a böngészőben olcsóbb és gyorsabb.
- */
-const FELH_OLDAL_MERET = 10;
-// A belso (lista+lapozo) ujrarajzolo, amit a felhasznalokEsemenyek allit be. A hatter-frissites
-// EZT hivja, NEM a felhasznalokEsemenyek-et: az ujra rakotne a kereso-mezore is a figyelot
-// (az a dobozon KIVUL van, nem rajzolodik ujra), es minden frissites utan duplazodna.
-let felhBelsoUjraRajzol = null;
-let felhKereses = '';
-let felhOldal = 1;
-const felhJeloltek = new Set();
+async function felhasznalokNezet() {
+  // A listat a SZERVER adja (listUsers), nem a Firestore: az e-mail csak ott erheto el.
+  // A users/{uid} dokumentumot barmelyik bejelentkezett felhasznalo olvashatja, ezert az
+  // e-mail SZANDEKOSAN nincs benne -- kulonben mindenki latna mindenki cimet.
+  const valasz = await httpsCallable(fuggvenyek, 'listUsers')({});
+  const emberek = ((valasz.data && valasz.data.users) || []).map((u) => ({ ...u, id: u.uid }));
+  utolsoFelhasznaloLista = emberek;
+  if (!emberek.length) return `<p class="ures">Még nincs egyetlen felhasználó sem.</p>`;
 
-/** Keresés névre ÉS e-mailre, kisbetűsítve, ékezet-érzékenyen (a magyar nevekhez ez a helyes). */
-function felhSzurt() {
-  const lista = utolsoFelhasznaloLista || [];
-  const k = felhKereses.trim().toLowerCase();
-  if (!k) return lista;
-  return lista.filter((e) => (
-    String(e.name || '').toLowerCase().includes(k) || String(e.email || '').toLowerCase().includes(k)
-  ));
-}
-
-function felhSorHtml(e) {
-  const szerep = roleOf(e);
-  const enE = e.id === profil?.uid;
+  const staffDb = emberek.filter((e) => roleOf(e) !== 'user').length;
   return `
+    <p class="ures" style="margin-bottom:14px">
+      ${emberek.length} felhasználó, ebből ${staffDb} kapott valamilyen jogot.
+      A szerepkör azonnal érvénybe lép, de a másik gépen csak a következő belépéskor frissül.
+    </p>
+    <div class="lista">${emberek.map((e) => {
+      const szerep = roleOf(e);
+      const enE = e.id === profil?.uid;
+      return `
       <article class="tetel">
-        <label class="felh-jelolo" title="${enE ? 'A saját fiókodat nem lehet így törölni.' : 'Kijelölés'}">
-          <input type="checkbox" data-felh-jelol="${esc(e.id)}" ${felhJeloltek.has(e.id) ? 'checked' : ''} ${enE ? 'disabled' : ''} />
-        </label>
         <div class="fo">
           <strong>${esc(e.name || '(névtelen)')}</strong>${enE ? ' <span class="jelzo aktiv">te</span>' : ''}
           <div class="meta">${esc(e.email || 'nincs e-mail')} · ${esc(e.tier || 'Scout')}</div>
@@ -435,116 +481,7 @@ function felhSorHtml(e) {
           <button class="masodlagos kicsi" data-felh-szerk="${esc(e.id)}">Szerkesztés</button>
         </div>
       </article>`;
-}
-
-/** A lista + lapozó + tömeges sáv. Ez rajzolódik újra kereséskor és lapozáskor,
- *  a kereső mező MAGA nem: különben minden leütésnél elveszne a fókusz. */
-function felhBelsoHtml() {
-  const osszes = (utolsoFelhasznaloLista || []).length;
-  const szurt = felhSzurt();
-  const oldalak = Math.max(1, Math.ceil(szurt.length / FELH_OLDAL_MERET));
-  if (felhOldal > oldalak) felhOldal = oldalak;
-  const tol = (felhOldal - 1) * FELH_OLDAL_MERET;
-  const oldalTetelek = szurt.slice(tol, tol + FELH_OLDAL_MERET);
-  const staffDb = (utolsoFelhasznaloLista || []).filter((e) => roleOf(e) !== 'user').length;
-
-  const oldalUidk = oldalTetelek.filter((e) => e.id !== profil?.uid).map((e) => e.id);
-  const mindJelolve = oldalUidk.length > 0 && oldalUidk.every((u) => felhJeloltek.has(u));
-
-  const osszegzo = felhKereses
-    ? `${szurt.length} találat a(z) ${osszes} felhasználó közül`
-    : `${osszes} felhasználó, ebből ${staffDb} kapott valamilyen jogot`;
-
-  const tomeges = `
-    <div class="felh-sav">
-      <label class="pipa"><input type="checkbox" id="felh-mind" ${mindJelolve ? 'checked' : ''} ${oldalUidk.length ? '' : 'disabled'} />
-        <span>Oldal kijelölése</span></label>
-      <span class="ures" style="padding:0">${felhJeloltek.size} kijelölve</span>
-      ${felhJeloltek.size ? `<button class="veszelyes kicsi" id="felh-tomeges-torles">Kijelöltek törlése (${felhJeloltek.size})</button>
-        <button class="masodlagos kicsi" id="felh-jeloles-torol">Kijelölés megszüntetése</button>` : ''}
-    </div>`;
-
-  if (!szurt.length) {
-    return `<p class="ures">${esc(osszegzo)}</p>${tomeges}
-      <p class="ures">Nincs találat erre: „${esc(felhKereses)}”.</p>`;
-  }
-
-  const lapozo = oldalak > 1 ? `
-    <div class="lapozo">
-      <button class="masodlagos kicsi" data-felh-lap="elozo" ${felhOldal === 1 ? 'disabled' : ''}>Előző</button>
-      <span>${felhOldal}. oldal / ${oldalak}</span>
-      <button class="masodlagos kicsi" data-felh-lap="kovetkezo" ${felhOldal === oldalak ? 'disabled' : ''}>Következő</button>
-    </div>` : '';
-
-  return `
-    <p class="ures" style="margin-bottom:10px">
-      ${esc(osszegzo)}. A szerepkör azonnal érvénybe lép, de a másik gépen csak a következő belépéskor frissül.
-    </p>
-    ${tomeges}
-    <div class="lista">${oldalTetelek.map(felhSorHtml).join('')}</div>
-    ${lapozo}`;
-}
-
-/** A lista betoltese a szerverrol + a kijeloles takaritasa. */
-async function felhasznalokBetolt() {
-  // A listat a SZERVER adja (listUsers), nem a Firestore: az e-mail csak ott erheto el.
-  // A users/{uid} dokumentumot barmelyik bejelentkezett felhasznalo olvashatja, ezert az
-  // e-mail SZANDEKOSAN nincs benne -- kulonben mindenki latna mindenki cimet.
-  const valasz = await httpsCallable(fuggvenyek, 'listUsers')({});
-  const emberek = ((valasz.data && valasz.data.users) || []).map((u) => ({ ...u, id: u.uid }));
-  utolsoFelhasznaloLista = emberek;
-  // A kijelolesbol essen ki, aki mar nincs a listaban (pl. kozben torolve lett).
-  const letezo = new Set(emberek.map((e) => e.id));
-  [...felhJeloltek].forEach((u) => { if (!letezo.has(u)) felhJeloltek.delete(u); });
-  return emberek;
-}
-
-function felhasznalokKeret() {
-  return `
-    <div class="felh-kereso-sor">
-      <input type="search" id="felh-kereso" placeholder="Keresés névre vagy e-mailre" value="${esc(felhKereses)}" />
-      <span class="felh-frissul" id="felh-frissul" hidden>frissítés...</span>
-    </div>
-    <div id="felh-doboz">${felhBelsoHtml()}</div>`;
-}
-
-/**
- * Szefi 2026-08-24: "nagyon lassu a betoltese a felhasznalo fulnek pedig meg csak 12 user van".
- * Nem a 12 sor lassu: a listUsers Cloud Function HIDEG indulasa merve ~2,6 masodperc (melegen 0,2).
- * Minden ujrarajzolas (fulvaltas, szerepkor-allitas, szerkeszto bezarasa) ujra meghivta, es addig
- * URES kepernyo volt. Ezert: ha van mar betoltott lista, AZONNAL azt rajzoljuk, es a frissites a
- * hatterben fut -- a felulet hasznalhato marad, a "frissites..." felirat jelzi, hogy dolgozik.
- */
-async function felhasznalokNezet() {
-  if (utolsoFelhasznaloLista && utolsoFelhasznaloLista.length) {
-    felhasznalokFrissitesHatterben();
-    return felhasznalokKeret();
-  }
-  const emberek = await felhasznalokBetolt();
-  if (!emberek.length) return `<p class="ures">Még nincs egyetlen felhasználó sem.</p>`;
-  return felhasznalokKeret();
-}
-
-/** Hatter-frissites: a lista ujratoltese ugy, hogy kozben a regi latszik. */
-function felhasznalokFrissitesHatterben() {
-  // A jelzest a kovetkezo korben keressuk meg: a hivas pillanataban meg nincs a DOM-ban.
-  setTimeout(async () => {
-    const jelzo = document.getElementById('felh-frissul');
-    if (jelzo) jelzo.hidden = false;
-    try {
-      await felhasznalokBetolt();
-    } catch (err) {
-      console.error('felhasznalo-lista frissites', err);
-      return;
-    } finally {
-      const j = document.getElementById('felh-frissul');
-      if (j) j.hidden = true;
-    }
-    // Csak akkor rajzolunk, ha a felhasznalo MEG MINDIG ezen a fulon van, es nem nyitott szerkesztot.
-    if (aktivFul !== 'felhasznalok' || szerkesztettFelhasznalo) return;
-    const cel = document.getElementById('tartalom');
-    if (cel && felhBelsoUjraRajzol) felhBelsoUjraRajzol(cel);
-  }, 0);
+    }).join('')}</div>`;
 }
 
 let szerkesztettFelhasznalo = null;   // { uid, adat }
@@ -856,116 +793,31 @@ function csomagokEsemenyek(cel) {
   }));
 }
 
-/** A jelentes-fulrol atugras egy felhasznalora: valtunk a Felhasznalok fulre, es ha megvan a
- *  listaban, egybol az O szerkesztojet nyitjuk. Igy a moderator egy kattintassal latja, kirol van szo. */
-async function ugrasFelhasznalora(uid) {
-  aktivFul = 'felhasznalok';
-  szerkesztettFelhasznalo = null;
-  await ujraRajzol();                         // ettol toltodik be az utolsoFelhasznaloLista
-  const adat = (utolsoFelhasznaloLista || []).find((x) => x.uid === uid);
-  if (adat) { szerkesztettFelhasznalo = { uid, adat }; await ujraRajzol(); }
-}
-
 function felhasznalokEsemenyek(cel) {
-  const kereso = cel.querySelector('#felh-kereso');
-  if (kereso) {
-    kereso.addEventListener('input', () => {
-      felhKereses = kereso.value;
-      felhOldal = 1;
-      belsoUjraRajzol(cel);
-    });
-  }
-  belsoKotesek(cel);
-  felhBelsoUjraRajzol = belsoUjraRajzol;   // a hatter-frissites ezt hivja
+  cel.querySelectorAll('[data-felh-szerk]').forEach((b) => b.addEventListener('click', () => {
+    const uid = b.dataset.felhSzerk;
+    const adat = (utolsoFelhasznaloLista || []).find((x) => x.uid === uid);
+    if (!adat) { alert('Nem találom ezt a felhasználót, frissítsd az oldalt.'); return; }
+    szerkesztettFelhasznalo = { uid, adat };
+    ujraRajzol();
+  }));
 
-  /** Csak a lista dobozát rajzoljuk újra: a kereső mező marad, vele a fókusz és a kurzor. */
-  function belsoUjraRajzol(gyoker) {
-    const doboz = gyoker.querySelector('#felh-doboz');
-    if (!doboz) return;
-    doboz.innerHTML = felhBelsoHtml();
-    belsoKotesek(gyoker);
-  }
-
-  function belsoKotesek(gyoker) {
-    gyoker.querySelectorAll('[data-felh-szerk]').forEach((b) => b.addEventListener('click', () => {
-      const uid = b.dataset.felhSzerk;
-      const adat = (utolsoFelhasznaloLista || []).find((x) => x.uid === uid);
-      if (!adat) { alert('Nem találom ezt a felhasználót, frissítsd az oldalt.'); return; }
-      szerkesztettFelhasznalo = { uid, adat };
-      ujraRajzol();
-    }));
-
-    gyoker.querySelectorAll('[data-szerep-uid]').forEach((v) => {
-      const eredeti = v.value;
-      v.addEventListener('change', async () => {
-        const uid = v.dataset.szerepUid;
-        const uj = v.value;
-        if (!confirm(`Biztosan "${SZEREP_NEVEK[uj]}" jogot adsz neki?`)) { v.value = eredeti; return; }
-        v.disabled = true;
-        try {
-          await httpsCallable(fuggvenyek, 'setUserRole')({ uid, role: uj });
-          await ujraRajzol();
-        } catch (err) {
-          v.value = eredeti; v.disabled = false;
-          alert(olvashatoHiba(err));
-        }
-      });
-    });
-
-    // Kijeloles: a Set-ben tartjuk, hogy lapozas es kereses utan is megmaradjon.
-    gyoker.querySelectorAll('[data-felh-jelol]').forEach((cb) => cb.addEventListener('change', () => {
-      const uid = cb.dataset.felhJelol;
-      if (cb.checked) felhJeloltek.add(uid); else felhJeloltek.delete(uid);
-      belsoUjraRajzol(gyoker);
-    }));
-
-    const mind = gyoker.querySelector('#felh-mind');
-    if (mind) mind.addEventListener('change', () => {
-      const tol = (felhOldal - 1) * FELH_OLDAL_MERET;
-      felhSzurt().slice(tol, tol + FELH_OLDAL_MERET)
-        .filter((e) => e.id !== profil?.uid)
-        .forEach((e) => { if (mind.checked) felhJeloltek.add(e.id); else felhJeloltek.delete(e.id); });
-      belsoUjraRajzol(gyoker);
-    });
-
-    const jelolesTorol = gyoker.querySelector('#felh-jeloles-torol');
-    if (jelolesTorol) jelolesTorol.addEventListener('click', () => { felhJeloltek.clear(); belsoUjraRajzol(gyoker); });
-
-    gyoker.querySelectorAll('[data-felh-lap]').forEach((b) => b.addEventListener('click', () => {
-      felhOldal += b.dataset.felhLap === 'kovetkezo' ? 1 : -1;
-      if (felhOldal < 1) felhOldal = 1;
-      belsoUjraRajzol(gyoker);
-    }));
-
-    // Tomeges torles: ket kerdes, es a nevek FELSOROLVA -- egy szam melle nem lehet
-    // felelosen igent mondani, a fiok-torles pedig visszavonhatatlan.
-    const tomeges = gyoker.querySelector('#felh-tomeges-torles');
-    if (tomeges) tomeges.addEventListener('click', async () => {
-      const uidk = [...felhJeloltek];
-      const nevek = uidk.map((u) => {
-        const e = (utolsoFelhasznaloLista || []).find((x) => x.uid === u);
-        return '- ' + ((e && (e.name || e.email)) || u);
-      });
-      if (!confirm(`${uidk.length} fiókot törölsz:\n\n${nevek.join('\n')}\n\nEz elviszi az adataikat is, és nem vonható vissza.`)) return;
-      if (!confirm('Tényleg? Ez a második és utolsó kérdés.')) return;
-
-      tomeges.disabled = true;
-      const hibasak = [];
-      for (let i = 0; i < uidk.length; i += 1) {
-        tomeges.textContent = `Törlés... (${i + 1}/${uidk.length})`;
-        try {
-          await httpsCallable(fuggvenyek, 'deleteAccount')({ uid: uidk[i] });
-          felhJeloltek.delete(uidk[i]);
-        } catch (err) {
-          const e = (utolsoFelhasznaloLista || []).find((x) => x.uid === uidk[i]);
-          hibasak.push(((e && (e.name || e.email)) || uidk[i]) + ': ' + olvashatoHiba(err));
-        }
+  cel.querySelectorAll('[data-szerep-uid]').forEach((v) => {
+    const eredeti = v.value;
+    v.addEventListener('change', async () => {
+      const uid = v.dataset.szerepUid;
+      const uj = v.value;
+      if (!confirm(`Biztosan "${SZEREP_NEVEK[uj]}" jogot adsz neki?`)) { v.value = eredeti; return; }
+      v.disabled = true;
+      try {
+        await httpsCallable(fuggvenyek, 'setUserRole')({ uid, role: uj });
+        await ujraRajzol();
+      } catch (err) {
+        v.value = eredeti; v.disabled = false;
+        alert(olvashatoHiba(err));
       }
-      // Akkor is frissitunk, ha volt hiba: a sikeresen toroltek tunjenek el a listarol.
-      await ujraRajzol();
-      if (hibasak.length) alert('Ezeket nem sikerült törölni:\n\n' + hibasak.join('\n'));
     });
-  }
+  });
 }
 
 /* ------------------------------ partnerek ------------------------------ */
@@ -1462,9 +1314,9 @@ async function ujraRajzol() {
       felhasznaloSzerkesztoEsemenyek();
       return;
     }
-    if (aktivFul === 'jelentesek' && can(profil, 'moderate_reports')) html = await jelentesekNezet({ db });
-    else if (aktivFul === 'receptek' && can(profil, 'manage_content')) html = await receptekNezet({ db });
-    else if (aktivFul === 'esemenyek' && can(profil, 'manage_content')) html = await esemenyekNezet({ db });
+    if (aktivFul === 'jelentesek' && can(profil, 'moderate_reports')) html = await jelentesekNezet();
+    else if (aktivFul === 'receptek' && can(profil, 'manage_content')) html = await tartalomNezet('recipes', 'name');
+    else if (aktivFul === 'esemenyek' && can(profil, 'manage_content')) html = await tartalomNezet('events', 'title');
     else if (aktivFul === 'tervek' && can(profil, 'manage_content')) {
       html = elonezetMod ? elonezetNezet() : await tervekNezet();
     }
@@ -1475,15 +1327,6 @@ async function ujraRajzol() {
     // A felhasznalo-ful sajat kezeloi (szerepkor-valaszto, Szerkesztes gomb). Enelkul a valaszto
     // OTT VAN a kepernyon, de nem csinal semmit -- pont ez tortent 2026-08-24-en: a screenshot
     // "keszet" mutatott, kozben egyetlen gomb sem elt.
-    if (aktivFul === 'jelentesek' && can(profil, 'moderate_reports')) {
-      jelentesekEsemenyek(cel, { db, ujraRajzol, ugrasFelhasznalora });
-    }
-    if (aktivFul === 'esemenyek' && can(profil, 'manage_content')) {
-      esemenyekEsemenyek(cel, { db, fuggvenyek, ujraRajzol });
-    }
-    if (aktivFul === 'receptek' && can(profil, 'manage_content')) {
-      receptekEsemenyek(cel, { db, fuggvenyek, ujraRajzol });
-    }
     if (aktivFul === 'felhasznalok' && can(profil, 'manage_users')) felhasznalokEsemenyek(cel);
     if (aktivFul === 'tervek' && can(profil, 'manage_content')) {
       csomagokEsemenyek(cel);
@@ -1533,8 +1376,8 @@ async function ujraRajzol() {
       }
     }));
 
-    cel.querySelectorAll('[data-uj-tetel]').forEach((b) => b.addEventListener('click', () => {
-      szerkesztettTetel = { kollekcio: b.dataset.ujTetel, id: undefined, adat: {} };
+    cel.querySelectorAll('[data-uj]').forEach((b) => b.addEventListener('click', () => {
+      szerkesztettTetel = { kollekcio: b.dataset.uj, id: undefined, adat: {} };
       ujraRajzol();
     }));
 
@@ -1592,7 +1435,32 @@ async function ujraRajzol() {
       }
     }));
 
-  
+    // A kifogasolt poszt torlese EGY lepesben, es a jelentes automatikusan "intezkedve" lesz --
+  // kulonben ott maradna nyitottkent egy mar nem letezo tartalomra.
+  cel.querySelectorAll('[data-poszt-torol]').forEach((b) => b.addEventListener('click', async () => {
+    if (!confirm('Biztosan törlöd ezt a posztot?\n\nA szerzője nem kap róla értesítést, és nem vonható vissza.')) return;
+    b.disabled = true; b.textContent = 'Törlés...';
+    try {
+      await deleteDoc(doc(db, 'posts', b.dataset.posztTorol));
+      await updateDoc(doc(db, 'reports', b.dataset.jelentesId), { status: 'actioned' });
+      await ujraRajzol();
+    } catch (err) {
+      b.disabled = false; b.textContent = 'Poszt törlése';
+      alert(olvashatoHiba(err));
+    }
+  }));
+
+  cel.querySelectorAll('[data-jelentes]').forEach((b) => b.addEventListener('click', async () => {
+      b.disabled = true;
+      try {
+        await updateDoc(doc(db, 'reports', b.dataset.jelentes), { status: b.dataset.uj });
+        await ujraRajzol();
+      } catch (err) {
+        b.disabled = false;
+        alert('Nem sikerült menteni. Lehet, hogy nincs hozzá jogosultságod.');
+        console.error(err);
+      }
+    }));
   } catch (err) {
     console.error(err);
     cel.innerHTML = `<p class="ures">Nem sikerült betölteni. Részletek a konzolban.</p>`;
@@ -1618,10 +1486,10 @@ async function indul() {
     allapot('Jogosultság ellenőrzése...');
     try {
       const snap = await getDoc(doc(db, 'users', user.uid));
-      profil = { email: user.email, ...(snap.exists() ? snap.data() : {}), uid: user.uid };
+      profil = { email: user.email, ...(snap.exists() ? snap.data() : {}) };
     } catch (err) {
       console.error(err);
-      profil = { email: user.email, uid: user.uid };
+      profil = { email: user.email };
     }
     if (!hasStaffAccess(profil)) {
       app.className = 'allapot';
