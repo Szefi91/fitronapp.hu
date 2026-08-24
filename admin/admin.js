@@ -9,7 +9,7 @@
  * NEM írhat a tartalom-gyűjteményekbe (firestore.rules: allow write: if false).
  */
 import { initializeApp } from 'firebase/app';
-import { getAuth, signInWithEmailAndPassword, signOut, onAuthStateChanged, GoogleAuthProvider, signInWithPopup } from 'firebase/auth';
+import { getAuth, signInWithEmailAndPassword, signOut, onAuthStateChanged, GoogleAuthProvider, OAuthProvider, signInWithPopup } from 'firebase/auth';
 import { getFirestore, doc, getDoc, collection, getDocs, updateDoc, query, where, limit , deleteDoc} from 'firebase/firestore';
 import { getFunctions, httpsCallable } from 'firebase/functions';
 import { getStorage, ref as tarolóRef, uploadBytes, getDownloadURL } from 'firebase/storage';
@@ -64,6 +64,7 @@ function belepesKepernyo(hibaSzoveg) {
       <button type="submit" id="belep-gomb">Belépés</button>
       <div class="valaszto"><span>vagy</span></div>
       <button type="button" id="google-gomb" class="masodlagos">Belépés Google-fiókkal</button>
+      <button type="button" id="apple-gomb" class="masodlagos">Belépés Apple ID-val</button>
       ${hibaSzoveg ? `<p class="hiba">${esc(hibaSzoveg)}</p>` : ''}
     </form>`;
   // Aki a telefonos appba Google-fiokkal lepett be, annak NINCS jelszava -- e nelkul be sem
@@ -74,6 +75,23 @@ function belepesKepernyo(hibaSzoveg) {
     } catch (err) {
       if (err?.code === 'auth/popup-closed-by-user') return;   // o zarta be, ez nem hiba
       belepesKepernyo('A Google-belépés nem sikerült: ' + (err?.code || 'ismeretlen hiba'));
+    }
+  });
+  // Aki a telefonos appba Apple ID-val lepett be, annak SEM jelszava, SEM Google-fiokja nincs
+  // (2026-08-24: a moderatorok egy resze igy jart, es sehogy nem jutott be). Az Apple ugyanazt a
+  // felhasznalo-azonositot adja vissza a weben, mint a mobilon, amig ugyanaz a fejlesztoi csapat --
+  // ezert ugyanabba a fiokba lep be, es a szerepkore megmarad.
+  document.getElementById('apple-gomb').addEventListener('click', async () => {
+    try {
+      const szolgaltato = new OAuthProvider('apple.com');
+      szolgaltato.addScope('email');
+      szolgaltato.addScope('name');
+      // Az Apple sajat felugroja magyarul jojjon fel, ha tudja.
+      szolgaltato.setCustomParameters({ locale: 'hu_HU' });
+      await signInWithPopup(auth, szolgaltato);
+    } catch (err) {
+      if (err?.code === 'auth/popup-closed-by-user') return;   // o zarta be, ez nem hiba
+      belepesKepernyo('Az Apple-belépés nem sikerült: ' + (err?.code || 'ismeretlen hiba'));
     }
   });
   document.getElementById('belepes-urlap').addEventListener('submit', async (e) => {
