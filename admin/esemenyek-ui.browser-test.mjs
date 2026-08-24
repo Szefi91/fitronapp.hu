@@ -25,11 +25,12 @@ p.on('console', (m) => { if (m.text().includes('[harness]')) console.log('   ' +
 p.on('pageerror', (e) => { console.log('LAP-HIBA:', e.message); hibak.push('pageerror: ' + e.message); });
 
 await p.goto(URL, { waitUntil: 'networkidle' });
-await p.waitForSelector('.lista', { timeout: 8000 });
+await p.waitForSelector('.esemeny-racs', { timeout: 8000 });
 
 /* 1) Lista: minden doksi látszik, dátum szerint, a dátumtalan a végén, piszkozat-jel jó helyen */
 ok('négy esemény-kártya jelenik meg', await p.locator('[data-esemeny-id]').count() === 4);
-const cimek = await p.locator('[data-esemeny-id] strong').allTextContents();
+/* Az uj (app-stilusu) kartyan a cim h3, nem strong -- 2026-08-24-i redesign. */
+const cimek = await p.locator('[data-esemeny-id] h3').allTextContents();
 ok('dátum szerinti sorrend, elöl a legkorábbi', cimek[0] === 'Nyárzáró Futás' && cimek[1] === 'Országos Szkander Kupa');
 ok('a dátum nélküli doksi NEM tűnik el, a lista végén van', cimek[3] === 'Dátum nélküli teszt');
 ok('pontosan egy piszkozat-jel van (a published:false eseményen)', await p.locator('.piszkozat-jel').count() === 1);
@@ -67,7 +68,7 @@ ok('hibás létszámnál sem indult szerver-hívás', await p.evaluate(() => !wi
 /* 4) Érvényes mentés: a CF a helyes adatot kapja, az ismeretlen mező megmarad */
 await p.fill('#ese-max', '40');
 await p.click('#ese-ment');
-await p.waitForSelector('.lista');
+await p.waitForSelector('.esemeny-racs');
 const mentes = await p.evaluate(() => window.__utolsoCF);
 ok('mentés: manageContent / events / upsert a jó id-vel',
   mentes && mentes.nev === 'manageContent' && mentes.payload.collection === 'events'
@@ -91,7 +92,7 @@ ok('a kép-előnézet megjelent', !(await p.locator('#ese-kep-elonezet').isHidde
 ok('a feltöltés az admin/ Storage-útvonalra ment', await p.evaluate(() => window.__utolsoFeltoltes.utvonal.startsWith('admin/')));
 await p.screenshot({ path: SC + '/esemenyek-uj-kepfeltoltes.png', fullPage: true });
 await p.click('#ese-ment');
-await p.waitForSelector('.lista');
+await p.waitForSelector('.esemeny-racs');
 const uj = await p.evaluate(() => window.__utolsoCF);
 ok('új eseménynél nincs id (a szerver ad)', uj.payload.action === 'upsert' && uj.payload.id === undefined);
 ok('új esemény month/day (DEC/05)', uj.payload.data.month === 'DEC' && uj.payload.data.day === '05');

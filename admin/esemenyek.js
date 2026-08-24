@@ -96,11 +96,6 @@ function napJel(datum) {
   return /^\d\d$/.test(n) ? n : '--';
 }
 
-function szepDatum(e) {
-  if (!e.date) return 'nincs dátum';
-  return `${e.date}${e.time ? ' ' + e.time : ''}`;
-}
-
 /* ------------------------------ állapot ------------------------------ */
 
 /* A szerkesztő állapota MODULON BELÜL él; fülváltásnál az admin.js újrarajzol, és

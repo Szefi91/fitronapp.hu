@@ -17,6 +17,7 @@ import { can, roleOf, hasStaffAccess, SZEREP_NEVEK } from './roles.js';
 import { jelentesekNezet, jelentesekEsemenyek } from './jelentesek.js';
 import { esemenyekNezet, esemenyekEsemenyek } from './esemenyek.js';
 import { receptekNezet, receptekEsemenyek } from './receptek.js';
+import { partnerAjanlatNezet, partnerAjanlatEsemenyek } from './partnerajanlat.js';
 import { osszeallitPartner, kulcsSzoveg, ertelmezKulcs } from './partner-utils.js';
 
 const konfig = {
@@ -98,6 +99,7 @@ function keret(tartalom) {
     can(profil, 'moderate_reports') && ['jelentesek', 'Jelentések'],
     can(profil, 'manage_content') && ['receptek', 'Receptek'],
     can(profil, 'manage_content') && ['esemenyek', 'Események'],
+    can(profil, 'manage_content') && ['konyhaajanlat', 'Konyha-ajánlat'],
     can(profil, 'manage_content') && ['tervek', 'Edzéstervek'],
     can(profil, 'manage_partners') && ['partnerek', 'Partnerek'],
     can(profil, 'manage_users') && ['felhasznalok', 'Felhasználók'],
@@ -1465,6 +1467,7 @@ async function ujraRajzol() {
     if (aktivFul === 'jelentesek' && can(profil, 'moderate_reports')) html = await jelentesekNezet({ db });
     else if (aktivFul === 'receptek' && can(profil, 'manage_content')) html = await receptekNezet({ db });
     else if (aktivFul === 'esemenyek' && can(profil, 'manage_content')) html = await esemenyekNezet({ db });
+    else if (aktivFul === 'konyhaajanlat' && can(profil, 'manage_content')) html = await partnerAjanlatNezet({ db });
     else if (aktivFul === 'tervek' && can(profil, 'manage_content')) {
       html = elonezetMod ? elonezetNezet() : await tervekNezet();
     }
@@ -1480,6 +1483,9 @@ async function ujraRajzol() {
     }
     if (aktivFul === 'esemenyek' && can(profil, 'manage_content')) {
       esemenyekEsemenyek(cel, { db, fuggvenyek, ujraRajzol });
+    }
+    if (aktivFul === 'konyhaajanlat' && can(profil, 'manage_content')) {
+      partnerAjanlatEsemenyek(cel, { db, fuggvenyek, ujraRajzol });
     }
     if (aktivFul === 'receptek' && can(profil, 'manage_content')) {
       receptekEsemenyek(cel, { db, fuggvenyek, ujraRajzol });
