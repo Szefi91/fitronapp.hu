@@ -1,0 +1,21 @@
+# Biztonsagi fejlecek (2026-08-25). A Vite a public/ tartalmat valtozatlanul a dist/ gyokerebe
+# masolja, a Netlify pedig innen olvassa. A HSTS-t a Netlify maga adja, azt nem duplazzuk.
+#
+# SZANDEKOSAN NINCS teljes Content-Security-Policy: egy szuk CSP eltorheti a betukeszletet, a
+# Firebase-t es a beagyazott tartalmat, azt kimerni kell eloszor. A `frame-ancestors` viszont CSAK
+# a beagyazast korlatozza, mast nem tud eltorni -- ezert az mar most bent van.
+/*
+  X-Content-Type-Options: nosniff
+  X-Frame-Options: SAMEORIGIN
+  Referrer-Policy: strict-origin-when-cross-origin
+  Content-Security-Policy: frame-ancestors 'self'
+  Permissions-Policy: geolocation=(), microphone=(), camera=()
+
+# Az admin sehol NEM agyazhato be, meg sajat oldalon sem: nincs olyan sajat felulet, ami
+# iframe-ben mutatna, viszont a clickjacking pont ott a legdragabb.
+/admin/*
+  X-Content-Type-Options: nosniff
+  X-Frame-Options: DENY
+  Referrer-Policy: no-referrer
+  Content-Security-Policy: frame-ancestors 'none'
+  Permissions-Policy: geolocation=(), microphone=(), camera=()
