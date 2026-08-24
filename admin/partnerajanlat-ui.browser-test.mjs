@@ -28,7 +28,7 @@ await p.waitForSelector('#pa-fej-urlap');
 /* 1) Fej-űrlap előtöltve + 390px-en nincs túlcsordulás */
 ok('390px-en nincs vizszintes tulcsordulas',
   await p.evaluate(() => document.documentElement.scrollWidth <= window.innerWidth + 1));
-ok('kuponkod elotoltve', await p.inputValue('#pa-kupon') === 'FITRON10');
+ok('kuponkod elotoltve', await p.inputValue('#pa-kupon') === 'KOLTI5');
 ok('leiras elotoltve', (await p.inputValue('#pa-leiras')).includes('kedvezmény'));
 
 /* 2) Lista: 3 termék sorrend szerint, a rejtett jelölve */
@@ -38,15 +38,15 @@ ok('a rejtett termek jelolve', (await p.locator('[data-pa-id="t2"]').textContent
 await p.screenshot({ path: SC + '/konyhaajanlat-lista.png', fullPage: true });
 
 /* 3) Kupon mentése: a CF a fej-dokumentumot kapja, fix id-vel */
-await p.fill('#pa-kupon', 'FITRON15');
+await p.fill('#pa-kupon', 'KOLTI10');
 await p.click('#pa-fej-ment');
 await p.waitForFunction(() => window.__utolsoCF);
 {
   const cf = await p.evaluate(() => window.__utolsoCF);
   ok('fej-mentes: partnerAjanlat/aktualis upsert',
     cf.payload.collection === 'partnerAjanlat' && cf.payload.id === 'aktualis' && cf.payload.action === 'upsert'
-    && cf.payload.data.kuponKod === 'FITRON15', JSON.stringify(cf.payload));
-  ok('ujrarajzolas utan az uj kupon latszik', await p.inputValue('#pa-kupon') === 'FITRON15');
+    && cf.payload.data.kuponKod === 'KOLTI10', JSON.stringify(cf.payload));
+  ok('ujrarajzolas utan az uj kupon latszik', await p.inputValue('#pa-kupon') === 'KOLTI10');
 }
 
 /* 4) Sorrend: a Whey-t hátrébb visszük -- KÉT teljes-dokumentumos mentés, csere */

@@ -30,7 +30,7 @@ const ESEMENYEK = {
 const GYUJTEMENYEK = {
   events: ESEMENYEK,
   'partnerAjanlat': {
-    aktualis: { kuponKod: 'FITRON10', cim: 'Partner ajánlat', leiras: '10% kedvezmény a partnernél.' },
+    aktualis: { kuponKod: 'KOLTI5', cim: 'Partner ajánlat', leiras: '10% kedvezmény a partnernél.' }, // a kupon az ELES ertekhez igazitva (Szefi, 2026-08-24)
   },
   'partnerAjanlat/aktualis/termekek': {
     t1: { nev: 'Whey Protein', ar: '12 990 Ft', markajelzes: 'BioTech', kategoria: 'Fehérje', kep: '', link: 'https://bolt.hu/whey', sorrend: 1, lathato: true },
