@@ -1,0 +1,25 @@
+<!doctype html>
+<html lang="hu">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>FITRON admin</title>
+  <meta name="robots" content="noindex,nofollow" />
+  <meta name="color-scheme" content="dark" />
+  <link rel="icon" type="image/svg+xml" href="/assets/favicon.svg" />
+  <link rel="stylesheet" href="./admin.css" />
+</head>
+<body>
+  <!-- Betöltés közben ez látszik. Ha a JS bármiért nem fut le, itt marad, és a
+       felhasználó nem egy üres fehér lapot néz. -->
+  <div id="app" class="allapot">
+    <p class="allapot-szoveg">Betöltés...</p>
+  </div>
+
+  <noscript>
+    <p class="allapot-szoveg">Ehhez a felülethez JavaScript kell.</p>
+  </noscript>
+
+  <script type="module" src="./admin.js"></script>
+</body>
+</html>

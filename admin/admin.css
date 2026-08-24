@@ -1,0 +1,114 @@
+/* FITRON admin felület. A landing színvilágát követi, de sűrűbb és munkára szánt:
+   itt nem eladunk, hanem dolgozunk. */
+:root {
+  --bg: #05080f;
+  --panel: #0c1320;
+  --panel-2: #111a2b;
+  --text: #e6f7ec;
+  --muted: #93a9a0;
+  --primary: #39ff6a;
+  --danger: #ff5c5c;
+  --warn: #ffc857;
+  --border: rgba(123, 255, 158, 0.14);
+}
+* { box-sizing: border-box; }
+html { background-color: var(--bg); }
+body {
+  margin: 0;
+  background-color: transparent;
+  color: var(--text);
+  font-family: Inter, system-ui, -apple-system, Segoe UI, Roboto, Arial, sans-serif;
+  font-size: 15px;
+  line-height: 1.5;
+}
+
+.allapot { min-height: 100vh; display: grid; place-content: center; padding: 24px; text-align: center; }
+.allapot-szoveg { color: var(--muted); }
+
+/* --- belépés --- */
+.belepes { width: min(380px, 92vw); }
+.belepes h1 { font-size: 1.4rem; margin: 0 0 4px; }
+.belepes p.alcim { color: var(--muted); margin: 0 0 22px; font-size: .92rem; }
+.mezo { display: block; margin-bottom: 12px; text-align: left; }
+.mezo span { display: block; font-size: .72rem; letter-spacing: .14em; text-transform: uppercase; color: var(--muted); margin-bottom: 6px; }
+input[type="email"], input[type="password"], input[type="text"], textarea, select {
+  width: 100%; padding: 11px 13px; border-radius: 11px; background: var(--panel-2);
+  border: 1px solid var(--border); color: var(--text); font: inherit;
+}
+input:focus, textarea:focus, select:focus { outline: none; border-color: rgba(57,255,106,.5); }
+button {
+  font: inherit; font-weight: 800; cursor: pointer; border: 0; border-radius: 11px;
+  padding: 11px 18px; background: var(--primary); color: #04140a;
+}
+button.masodlagos { background: transparent; color: var(--text); border: 1px solid var(--border); }
+button.veszelyes { background: transparent; color: var(--danger); border: 1px solid rgba(255,92,92,.35); }
+button:disabled { opacity: .5; cursor: default; }
+.hiba { color: var(--danger); font-size: .86rem; margin: 10px 0 0; }
+
+/* --- keret --- */
+.fejlec {
+  display: flex; align-items: center; gap: 14px; flex-wrap: wrap;
+  padding: 14px 20px; border-bottom: 1px solid var(--border); background: var(--panel);
+  position: sticky; top: 0; z-index: 5;
+}
+.fejlec h1 { font-size: 1rem; margin: 0; letter-spacing: .04em; }
+.fejlec .jobb { margin-left: auto; display: flex; align-items: center; gap: 12px; }
+.szerep {
+  font-size: .68rem; letter-spacing: .14em; text-transform: uppercase; font-weight: 800;
+  padding: .3em .7em; border-radius: 99px; background: rgba(57,255,106,.12);
+  border: 1px solid var(--border); color: var(--primary);
+}
+.ki { font-size: .84rem; color: var(--muted); }
+
+.fulek { display: flex; gap: 6px; padding: 12px 20px 0; flex-wrap: wrap; }
+.ful {
+  background: transparent; color: var(--muted); border: 1px solid transparent;
+  padding: 8px 14px; border-radius: 10px 10px 0 0; font-size: .86rem;
+}
+.ful.aktiv { color: var(--text); background: var(--panel); border-color: var(--border); border-bottom-color: var(--panel); }
+
+main { padding: 20px; max-width: 1100px; }
+.ures { color: var(--muted); padding: 28px 0; }
+
+.lista { display: grid; gap: 10px; }
+.tetel {
+  background: var(--panel); border: 1px solid var(--border); border-radius: 14px;
+  padding: 14px 16px; display: flex; gap: 14px; align-items: flex-start;
+}
+.tetel .fo { flex: 1; min-width: 0; }
+.tetel strong { display: block; }
+.tetel .meta { color: var(--muted); font-size: .82rem; margin-top: 2px; }
+.jelzo {
+  font-size: .66rem; letter-spacing: .12em; text-transform: uppercase; font-weight: 800;
+  padding: .28em .6em; border-radius: 99px; white-space: nowrap;
+}
+.jelzo.nyitott { background: rgba(255,92,92,.16); color: var(--danger); }
+.jelzo.atnezve { background: rgba(255,200,87,.16); color: var(--warn); }
+.jelzo.intezkedve { background: rgba(57,255,106,.16); color: var(--primary); }
+.muveletek { display: flex; gap: 8px; flex-wrap: wrap; margin-top: 10px; }
+.muveletek button { padding: 7px 12px; font-size: .8rem; }
+
+.figyelmeztetes {
+  background: rgba(255,200,87,.08); border: 1px solid rgba(255,200,87,.3);
+  border-radius: 12px; padding: 12px 14px; margin-bottom: 16px; font-size: .88rem;
+}
+
+/* Jelolonegyzetes sor (partner aktiv/szunetel). A .mezo blokk-elrendezes, itt egy sorban kell. */
+.mezo-sor { display: flex; align-items: center; gap: 10px; }
+.mezo-sor span { margin: 0; text-transform: none; letter-spacing: 0; font-size: .82rem; }
+.mezo-sor input[type="checkbox"] { width: 18px; height: 18px; accent-color: var(--accent, #7cf); }
+
+/* Csak olvashato mezo (partner azonositoja): latszodjon, hogy nem lehet atirni. */
+.mezo input[readonly] { opacity: .65; cursor: not-allowed; }
+
+/* Uzleti beallitas-sor a partnerek folott (aruhaz levonasa). */
+.beallitas { background: rgba(255,255,255,.03); border: 1px solid rgba(255,255,255,.07);
+  border-radius: 12px; padding: 12px 14px; margin-bottom: 16px; }
+.beallitas .mezo-sor { margin-bottom: 6px; }
+.beallitas input[type="text"] { width: 90px; }
+.beallitas button { padding: 6px 14px; }
+.sugo { color: var(--muted); font-size: .78rem; margin: 0; line-height: 1.45; }
+
+/* "vagy" elvalaszto a ket belepesi mod kozott */
+.valaszto { display: flex; align-items: center; gap: 10px; margin: 14px 0; color: var(--muted); font-size: .72rem; text-transform: uppercase; letter-spacing: .14em; }
+.valaszto::before, .valaszto::after { content: ''; flex: 1; height: 1px; background: rgba(255,255,255,.08); }
