@@ -9,7 +9,7 @@
  * NEM írhat a tartalom-gyűjteményekbe (firestore.rules: allow write: if false).
  */
 import { initializeApp } from 'firebase/app';
-import { getAuth, signInWithEmailAndPassword, signOut, onAuthStateChanged, GoogleAuthProvider, OAuthProvider, signInWithPopup, signInWithCustomToken } from 'firebase/auth';
+import { getAuth, signInWithEmailAndPassword, signOut, onAuthStateChanged, GoogleAuthProvider, OAuthProvider, signInWithPopup, signInWithRedirect, getRedirectResult, signInWithCustomToken } from 'firebase/auth';
 import { getFirestore, doc, getDoc, collection, getDocs, updateDoc, query, where, limit , deleteDoc} from 'firebase/firestore';
 import { getFunctions, httpsCallable } from 'firebase/functions';
 import QRCode from 'qrcode';
@@ -54,6 +54,33 @@ function allapot(szoveg) {
 
 /* ------------------------------ belépés ------------------------------ */
 
+/**
+ * TELEFONON NEM MEGY A FELUGRO ABLAKOS BELEPES (2026-08-24, Szefi jelezte elesben).
+ * A FaceID lefut, az Apple oldalan minden sikeres, de a mobil bongeszo elvagja a kapcsolatot a fo
+ * ablak es a felugro kozott, ezert a valasz sosem er vissza: az oldalon latszolag NEM TORTENIK
+ * SEMMI. Telefonon ezert atiranyitast hasznalunk (a lap maga megy at es jon vissza).
+ */
+function mobil() {
+  const ua = navigator.userAgent || '';
+  // Az uj iPadek Macintosh-nak vallanak magukat, oket az erintes-tamogatas arulja el.
+  return /iPhone|iPad|iPod|Android/i.test(ua) || (/Macintosh/.test(ua) && navigator.maxTouchPoints > 1);
+}
+
+/** Egy helyen dontjuk el, hogy felugro vagy atiranyitas -- a ket szolgaltato ugyanazt kapja. */
+async function belepSzolgaltatoval(szolgaltato, nev) {
+  try {
+    if (mobil()) {
+      allapot('Átirányítalak a bejelentkezéshez...');
+      await signInWithRedirect(auth, szolgaltato);
+      return;   // innen a lap elnavigal
+    }
+    await signInWithPopup(auth, szolgaltato);
+  } catch (err) {
+    if (err?.code === 'auth/popup-closed-by-user') return;   // o zarta be, ez nem hiba
+    belepesKepernyo(`A(z) ${nev}-belépés nem sikerült: ` + (err?.code || 'ismeretlen hiba'));
+  }
+}
+
 function belepesKepernyo(hibaSzoveg) {
   app.className = 'allapot';
   app.innerHTML = `
@@ -71,30 +98,20 @@ function belepesKepernyo(hibaSzoveg) {
     </form>`;
   // Aki a telefonos appba Google-fiokkal lepett be, annak NINCS jelszava -- e nelkul be sem
   // tudna jonni ide. (Szefi kerdezte 2026-08-23: "mi van ha gmaillel leptem be?")
-  document.getElementById('google-gomb').addEventListener('click', async () => {
-    try {
-      await signInWithPopup(auth, new GoogleAuthProvider());
-    } catch (err) {
-      if (err?.code === 'auth/popup-closed-by-user') return;   // o zarta be, ez nem hiba
-      belepesKepernyo('A Google-belépés nem sikerült: ' + (err?.code || 'ismeretlen hiba'));
-    }
+  document.getElementById('google-gomb').addEventListener('click', () => {
+    belepSzolgaltatoval(new GoogleAuthProvider(), 'Google');
   });
   // Aki a telefonos appba Apple ID-val lepett be, annak SEM jelszava, SEM Google-fiokja nincs
   // (2026-08-24: a moderatorok egy resze igy jart, es sehogy nem jutott be). Az Apple ugyanazt a
   // felhasznalo-azonositot adja vissza a weben, mint a mobilon, amig ugyanaz a fejlesztoi csapat --
   // ezert ugyanabba a fiokba lep be, es a szerepkore megmarad.
-  document.getElementById('apple-gomb').addEventListener('click', async () => {
-    try {
-      const szolgaltato = new OAuthProvider('apple.com');
-      szolgaltato.addScope('email');
-      szolgaltato.addScope('name');
-      // Az Apple sajat felugroja magyarul jojjon fel, ha tudja.
-      szolgaltato.setCustomParameters({ locale: 'hu_HU' });
-      await signInWithPopup(auth, szolgaltato);
-    } catch (err) {
-      if (err?.code === 'auth/popup-closed-by-user') return;   // o zarta be, ez nem hiba
-      belepesKepernyo('Az Apple-belépés nem sikerült: ' + (err?.code || 'ismeretlen hiba'));
-    }
+  document.getElementById('apple-gomb').addEventListener('click', () => {
+    const szolgaltato = new OAuthProvider('apple.com');
+    szolgaltato.addScope('email');
+    szolgaltato.addScope('name');
+    // Az Apple sajat felugroja/oldala magyarul jojjon fel, ha tudja.
+    szolgaltato.setCustomParameters({ locale: 'hu_HU' });
+    belepSzolgaltatoval(szolgaltato, 'Apple');
   });
   document.getElementById('telefon-gomb').addEventListener('click', () => telefonosBelepes());
   document.getElementById('belepes-urlap').addEventListener('submit', async (e) => {
@@ -1714,6 +1731,12 @@ async function indul() {
   // A tartalom-iras SZERVER-OLDALON megy: a bongeszo nem irhat kozvetlenul
   // (firestore.rules: allow write: if false). A regio egyezzen a Cloud Function-okkel.
   fuggvenyek = getFunctions(fbApp, 'europe-west1');
+
+  // Visszateres az atiranyitasos belepesbol. A hibat KI KELL IRNI: enelkul egy sikertelen belepes
+  // pontosan ugy nezne ki, mint amikor nem tortenik semmi.
+  getRedirectResult(auth).catch((err) => {
+    if (err?.code) belepesKepernyo('A belépés nem sikerült: ' + err.code);
+  });
 
   onAuthStateChanged(auth, async (user) => {
     if (!user) { profil = null; belepesKepernyo(); return; }

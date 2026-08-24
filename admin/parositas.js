@@ -1,5 +1,5 @@
 import { initializeApp } from 'firebase/app';
-import { getAuth, onAuthStateChanged, signInWithPopup, GoogleAuthProvider, OAuthProvider, signOut } from 'firebase/auth';
+import { getAuth, onAuthStateChanged, signInWithPopup, signInWithRedirect, getRedirectResult, GoogleAuthProvider, OAuthProvider, signOut } from 'firebase/auth';
 import { getFunctions, httpsCallable } from 'firebase/functions';
 
 /**
@@ -26,6 +26,23 @@ const app = document.getElementById('app');
 const kod = new URLSearchParams(location.search).get('kod') || '';
 let auth = null;
 let fuggvenyek = null;
+
+/**
+ * TELEFONON NEM MEGY A FELUGRO ABLAKOS BELEPES (2026-08-24, Szefi jelezte elesben).
+ *
+ * Tunet: a FaceID lefut, az Apple oldalan minden sikeres, de az oldal nem lep tovabb -- ugy tunik,
+ * mintha semmi nem tortent volna. Ok: a mobil bongeszo elvagja a kapcsolatot a fo ablak es a
+ * felugro kozott, ezert a valasz sosem er vissza. Ez a felugro ablakos belepes ismert korlatja
+ * mobilon, nem a mi hibank es nem a fiokke.
+ *
+ * Ezert telefonon ATIRANYITAST hasznalunk: maga a lap megy at az Apple-hoz, majd vissza. A
+ * visszateres utan a getRedirectResult adja meg az eredmenyt (es a hibat is, ha volt).
+ */
+function mobil() {
+  const ua = navigator.userAgent || '';
+  // Az uj iPadek Macintosh-nak vallanak magukat, oket az erintes-tamogatas arulja el.
+  return /iPhone|iPad|iPod|Android/i.test(ua) || (/Macintosh/.test(ua) && navigator.maxTouchPoints > 1);
+}
 
 function esc(s) {
   return String(s ?? '').replace(/[&<>"']/g, (c) => (
@@ -61,6 +78,11 @@ function belepesKepernyo(hibaSzoveg) {
 
   const belep = async (szolgaltato) => {
     try {
+      if (mobil()) {
+        allapot('Átirányítalak a bejelentkezéshez...');
+        await signInWithRedirect(auth, szolgaltato);
+        return;   // innen a lap elnavigal, es visszatereskor a getRedirectResult viszi tovabb
+      }
       await signInWithPopup(auth, szolgaltato);
     } catch (err) {
       if (err?.code === 'auth/popup-closed-by-user') return;   // o zarta be, ez nem hiba
@@ -123,6 +145,13 @@ function indul() {
   fuggvenyek = getFunctions(fb, 'europe-west1');
 
   allapot('Betöltés...');
+
+  // Visszateres az atiranyitasos belepesbol. A hibat KI KELL IRNI: enelkul egy sikertelen belepes
+  // pontosan ugy nezne ki, mint amikor nem tortenik semmi -- eppen ez volt a panasz.
+  getRedirectResult(auth).catch((err) => {
+    if (err?.code) belepesKepernyo('A belépés nem sikerült: ' + err.code);
+  });
+
   onAuthStateChanged(auth, (user) => {
     if (!user) belepesKepernyo();
     else jovahagyoKepernyo(user);
