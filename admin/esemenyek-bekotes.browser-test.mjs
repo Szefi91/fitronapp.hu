@@ -34,7 +34,7 @@ const szoveg = await p.locator('main, #tartalom, body').first().innerText();
 ok('Lista: a rögzített esemény látszik (Nyári futóverseny)', szoveg.includes('Nyári futóverseny'));
 ok('Lista: a piszkozat is látszik (Őszi edzőtábor)', szoveg.includes('Őszi edzőtábor'));
 
-const kartyak = await p.locator('[data-esemeny-id]').count();
+const kartyak = await p.locator('.esemeny-kartya').count();
 ok('Két esemény-kártya van', kartyak === 2);
 
 // 2) Szerkesztő megnyílik és a mezők fel vannak töltve

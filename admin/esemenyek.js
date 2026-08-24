@@ -109,22 +109,40 @@ let szerkesztettEsemeny = null;   // { id?, adat }
 
 /* ------------------------------ lista-nézet ------------------------------ */
 
+/**
+ * A kártya SZÁNDÉKOSAN az app Események-oldalát követi (views/Events.tsx): lila kártya,
+ * bal oldalt a dátum-doboz (hónap fölött, nap alatta), mellette a cím, helyszín, típus és
+ * a címke-pirulák, prémiumnál lila szalag a sarokban.
+ * Szefi kérése (2026-08-24), ugyanaz, amit a Receptek fül kapott: szerkesztés közben azt
+ * lássa, amit a felhasználó is látni fog.
+ */
 function esemenyKartya(e) {
+  const premium = e.isPremium === true;
+  const cimkek = Array.isArray(e.tags) ? e.tags : [];
   return `
-    <article class="huzhato" data-esemeny-id="${esc(e.id)}">
-      ${e.image ? `<div class="huzhato-kep" style="background-image:url('${esc(e.image)}')"></div>` : ''}
-      <div class="huzhato-fo">
-        <strong>${esc(e.title || '(névtelen)')}</strong>
-        <div class="huzhato-meta">
-          📅 ${esc(szepDatum(e))} · 📍 ${esc(e.location || 'nincs helyszín')}
-          · 👥 ${Number(e.attendees) || 0} jelentkező${e.maxAttendees ? ` / max ${esc(e.maxAttendees)}` : ''}
-          ${e.type ? ` · ${esc(e.type)}` : ''}
-          ${e.published === false ? ' · <span class="piszkozat-jel">piszkozat</span>' : ''}
+    <article class="esemeny-kartya${premium ? ' premium' : ''}" data-esemeny-id="${esc(e.id)}">
+      ${premium ? '<span class="esemeny-szalag">Prémium</span>' : ''}
+      <div class="esemeny-fej">
+        <div class="esemeny-datum">
+          <span class="honap">${esc(honapJel(e.date) || '--')}</span>
+          <span class="nap">${esc(napJel(e.date))}</span>
+        </div>
+        <div class="esemeny-fo">
+          <h3>${esc(e.title || '(névtelen)')}</h3>
+          <div class="esemeny-sor">
+            <span>📍 ${esc(e.location || 'nincs helyszín')}</span>
+            ${e.type ? `<span>· ${esc(e.type)}</span>` : ''}
+          </div>
+          <div class="esemeny-sor halvany">
+            👥 ${Number(e.attendees) || 0} jelentkező${e.maxAttendees ? ` / max ${esc(e.maxAttendees)}` : ''}
+            ${e.hasMedal ? ' · 🏅 érmes' : ''}
+            ${e.published === false ? ' · <span class="piszkozat-jel">piszkozat</span>' : ''}
+          </div>
+          ${cimkek.length ? `<div class="esemeny-cimkek">${cimkek.map((c) => `<span>${esc(c)}</span>`).join('')}</div>` : ''}
         </div>
       </div>
-      ${e.isPremium ? '<span class="jelzo intezkedve">Prémium</span>' : ''}
-      <div class="huzhato-gombok">
-        <button class="masodlagos kicsi" data-esemeny-szerk="${esc(e.id)}">Szerk.</button>
+      <div class="esemeny-gombok">
+        <button class="masodlagos kicsi" data-esemeny-szerk="${esc(e.id)}">Szerkesztés</button>
         <button class="veszelyes kicsi" data-esemeny-torol="${esc(e.id)}" data-nev="${esc(e.title || '')}">Törlés</button>
       </div>
     </article>`;
@@ -237,7 +255,7 @@ export async function esemenyekNezet({ db }) {
   if (!tetelek.length) {
     return fejlec + `<p class="ures">Ez a gyűjtemény üres. Az app ilyenkor a beépített tartaléklistát használja.</p>`;
   }
-  return fejlec + `<div class="lista">${tetelek.map(esemenyKartya).join('')}</div>`;
+  return fejlec + `<div class="esemeny-racs">${tetelek.map(esemenyKartya).join('')}</div>`;
 }
 
 export function esemenyekEsemenyek(cel, { db, fuggvenyek, ujraRajzol }) {
