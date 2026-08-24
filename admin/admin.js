@@ -9,9 +9,10 @@
  * NEM írhat a tartalom-gyűjteményekbe (firestore.rules: allow write: if false).
  */
 import { initializeApp } from 'firebase/app';
-import { getAuth, signInWithEmailAndPassword, signOut, onAuthStateChanged, GoogleAuthProvider, OAuthProvider, signInWithPopup } from 'firebase/auth';
+import { getAuth, signInWithEmailAndPassword, signOut, onAuthStateChanged, GoogleAuthProvider, OAuthProvider, signInWithPopup, signInWithCustomToken } from 'firebase/auth';
 import { getFirestore, doc, getDoc, collection, getDocs, updateDoc, query, where, limit , deleteDoc} from 'firebase/firestore';
 import { getFunctions, httpsCallable } from 'firebase/functions';
+import QRCode from 'qrcode';
 import { getStorage, ref as tarolóRef, uploadBytes, getDownloadURL } from 'firebase/storage';
 import { can, roleOf, hasStaffAccess, SZEREP_NEVEK } from './roles.js';
 import { jelentesekNezet, jelentesekEsemenyek } from './jelentesek.js';
@@ -65,6 +66,7 @@ function belepesKepernyo(hibaSzoveg) {
       <div class="valaszto"><span>vagy</span></div>
       <button type="button" id="google-gomb" class="masodlagos">Belépés Google-fiókkal</button>
       <button type="button" id="apple-gomb" class="masodlagos">Belépés Apple ID-val</button>
+      <button type="button" id="telefon-gomb" class="masodlagos">Belépés telefonnal</button>
       ${hibaSzoveg ? `<p class="hiba">${esc(hibaSzoveg)}</p>` : ''}
     </form>`;
   // Aki a telefonos appba Google-fiokkal lepett be, annak NINCS jelszava -- e nelkul be sem
@@ -94,6 +96,7 @@ function belepesKepernyo(hibaSzoveg) {
       belepesKepernyo('Az Apple-belépés nem sikerült: ' + (err?.code || 'ismeretlen hiba'));
     }
   });
+  document.getElementById('telefon-gomb').addEventListener('click', () => telefonosBelepes());
   document.getElementById('belepes-urlap').addEventListener('submit', async (e) => {
     e.preventDefault();
     const gomb = document.getElementById('belep-gomb');
@@ -107,6 +110,81 @@ function belepesKepernyo(hibaSzoveg) {
       console.warn('belepes hiba', err?.code);
     }
   });
+}
+
+/* --------------------- belépés telefonnal (QR) --------------------- */
+
+/**
+ * QR-ES PAROSITAS (2026-08-24, Szefi kerese)
+ *
+ * MIERT: a moderatorok egy resze CSAK Apple ID-val letezik, es a gepen az Apple-belepes
+ * jelszo-beirast jelentene. Szefi szavaival: az Apple ID azert egyszeru, mert "faceid check
+ * es bent is van". Ezert a belepes a TELEFONON tortenik, a gep csak egy kodot mutat.
+ *
+ * A gep KET titkot kap: a `kod` a QR-be kerul (ezzel csak JOVAHAGYNI lehet, ahhoz is jogosult
+ * belepes kell a telefonon), a `titok` viszont SOHA nem hagyja el ezt a lapot -- a belepteto
+ * tokent csak annak ismereteben adja ki a szerver. Igy aki lefotozza a QR-t, nem viszi el a
+ * munkamenetet.
+ */
+async function telefonosBelepes() {
+  const rajzol = (belso) => {
+    app.className = 'allapot';
+    app.innerHTML = `<div class="belepes"><h1>Belépés telefonnal</h1>${belso}</div>`;
+  };
+  rajzol('<p class="alcim">Egy pillanat, készítem a kódot...</p>');
+
+  let kod, titok, elettartamMp;
+  try {
+    const v = await httpsCallable(fuggvenyek, 'parositasKeres')({});
+    ({ kod, titok, elettartamMp } = v.data);
+  } catch (err) {
+    belepesKepernyo('Nem sikerült kódot kérni: ' + (err?.code || 'ismeretlen hiba'));
+    return;
+  }
+
+  const cel = `${location.origin}/admin/parositas.html?kod=${kod}`;
+  // Sotet hatteren vilagos QR nehezen olvasodik, ezert a kod fekete FEHER alapon, keretben.
+  const png = await QRCode.toDataURL(cel, { width: 260, margin: 2, color: { dark: '#000000', light: '#ffffff' } });
+
+  rajzol(`
+    <p class="alcim">Nézz rá a telefonod kamerájával, majd hagyd jóvá. Nem kell hozzá alkalmazás.</p>
+    <img src="${png}" alt="Párosítás QR-kódja" width="260" height="260"
+         style="display:block;margin:0 auto;border-radius:12px" />
+    <p class="alcim" id="visszaszamlalo" style="margin-top:14px">A kód <strong>${elettartamMp}</strong> másodpercig él.</p>
+    <button type="button" id="megse-gomb" class="masodlagos" style="margin-top:6px">Mégsem</button>`);
+
+  let vege = false;
+  document.getElementById('megse-gomb').addEventListener('click', () => { vege = true; belepesKepernyo(); });
+
+  const hatarido = Date.now() + elettartamMp * 1000;
+  const visszaszamlalo = setInterval(() => {
+    const maradt = Math.max(0, Math.round((hatarido - Date.now()) / 1000));
+    const el = document.getElementById('visszaszamlalo');
+    if (el) el.innerHTML = `A kód <strong>${maradt}</strong> másodpercig él.`;
+  }, 1000);
+
+  // Ketmasodpercenkent kerdezunk ra: a felhasznalo par masodperc alatt vegez a telefonon,
+  // ennel surubben felesleges terhelni a fuggvenyt.
+  while (!vege && Date.now() < hatarido) {
+    await new Promise((r) => setTimeout(r, 2000));
+    if (vege) break;
+    try {
+      const v = await httpsCallable(fuggvenyek, 'parositasAllapot')({ kod, titok });
+      if (v.data?.allapot === 'jovahagyva' && v.data.token) {
+        clearInterval(visszaszamlalo);
+        rajzol('<p class="alcim">Jóváhagyva, léptetlek be...</p>');
+        await signInWithCustomToken(auth, v.data.token);
+        return;   // innen az onAuthStateChanged viszi tovabb
+      }
+      if (v.data?.allapot === 'lejart' || v.data?.allapot === 'nincs') break;
+    } catch (err) {
+      clearInterval(visszaszamlalo);
+      belepesKepernyo('A párosítás megszakadt: ' + (err?.code || 'ismeretlen hiba'));
+      return;
+    }
+  }
+  clearInterval(visszaszamlalo);
+  if (!vege) belepesKepernyo('Lejárt a kód. Próbáld újra.');
 }
 
 /* ------------------------------ keret ------------------------------ */

@@ -21,6 +21,9 @@ export default defineConfig({
         de: resolve(__dirname, 'de/index.html'),
         // Az admin KULON belepesi pont: a marketing-oldal NEM tolti be a Firebase SDK-t.
         admin: resolve(__dirname, 'admin/index.html'),
+        // A telefonon megnyilo jovahagyo-oldal KULON belepesi pont: sajat, kicsi bundle,
+        // hogy egy QR-beolvasas utan azonnal betoltodjon mobilneten is.
+        parositas: resolve(__dirname, 'admin/parositas.html'),
       },
     },
     assetsInlineLimit: 0,
